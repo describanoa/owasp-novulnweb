@@ -92,10 +92,10 @@ export const registerUser = async (
  * Login de usuario
  * OWASP A07 - Identification Failures: Verificar credenciales de forma segura
  */
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (username: string, password: string) => {
   try {
-    // Buscar usuario por email
-    const user = await User.findOne({ email });
+    // Buscar usuario por username
+    const user = await User.findOne({ username });
 
     if (!user) {
       // OWASP A07: No revelar si el usuario existe o no
