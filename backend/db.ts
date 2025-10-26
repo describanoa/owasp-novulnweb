@@ -58,10 +58,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 60, // bcrypt hash length
+    select: false, // OWASP A05: No incluir password en queries por defecto
   },
   profileImage: {
     type: String,
     default: null,
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
   },
   createdAt: {
     type: Date,

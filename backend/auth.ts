@@ -8,6 +8,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from './db.js';
+import { logger } from './utils.js'; // OWASP A09 - Security Logging: Registrar eventos de seguridad
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -26,7 +27,7 @@ if (!JWT_SECRET) {
 export type JWTPayload = {
   userId: string;
   username: string;
-  email: string;
+  role: string;
 }
 
 /**
@@ -60,12 +61,14 @@ export const registerUser = async (
 
     await user.save();
 
-    // Generar JWT
+    logger.info(`Usuario registrado exitosamente: ${username}`);
+
+    // Generar JWT con role
     const token = jwt.sign(
       {
         userId: user._id.toString(),
         username: user.username,
-        email: user.email,
+        role: user.role,
       } as JWTPayload,
       JWT_SECRET,
       { expiresIn: '24h' } // OWASP A07: Token expira en 24 horas
@@ -81,6 +84,7 @@ export const registerUser = async (
       },
     };
   } catch (error: any) {
+    logger.error(`Error en registerUser: ${error.message}`);
     return {
       success: false,
       message: error.message || 'Error al registrar usuario',
@@ -94,10 +98,11 @@ export const registerUser = async (
  */
 export const loginUser = async (username: string, password: string) => {
   try {
-    // Buscar usuario por username
-    const user = await User.findOne({ username });
+    // Buscar usuario por username y INCLUIR password (select: false en schema)
+    const user = await User.findOne({ username }).select('+password');
 
     if (!user) {
+      logger.warn(`Intento de login fallido - usuario no existe: ${username}`);
       // OWASP A07: No revelar si el usuario existe o no
       throw new Error('Credenciales inválidas');
     }
@@ -106,6 +111,7 @@ export const loginUser = async (username: string, password: string) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
+      logger.warn(`Intento de login fallido - password incorrecto: ${username}`);
       // OWASP A07: Mismo mensaje para usuario inexistente o password incorrecto
       throw new Error('Credenciales inválidas');
     }
@@ -114,16 +120,18 @@ export const loginUser = async (username: string, password: string) => {
     user.lastLogin = new Date();
     await user.save();
 
-    // Generar JWT
+    // Generar JWT con role
     const token = jwt.sign(
       {
         userId: user._id.toString(),
         username: user.username,
-        email: user.email,
+        role: user.role,
       } as JWTPayload,
       JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    logger.info(`Login exitoso: ${username}`);
 
     return {
       success: true,
@@ -135,6 +143,7 @@ export const loginUser = async (username: string, password: string) => {
       },
     };
   } catch (error: any) {
+    logger.error(`Error en loginUser: ${error.message}`);
     return {
       success: false,
       message: error.message || 'Error al iniciar sesión',
@@ -151,6 +160,7 @@ export const verifyToken = (token: string): JWTPayload | null => {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
   } catch (error) {
+    logger.warn('Token JWT inválido o expirado');
     return null; // Token inválido o expirado
   }
 };
