@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ProfileForm from '../components/ProfileForm';
 ---
 
 <Layout title="Mi Perfil - SecureApp">
@@ -8,10 +9,7 @@ import Layout from '../layouts/Layout.astro';
       <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
         Mi Perfil
       </h1>
-      {/* Aquí irá el ProfileForm */}
-      <div class="text-center text-gray-500">
-        Perfil próximamente...
-      </div>
+      <ProfileForm client:load />
     </div>
   </main>
 </Layout>
