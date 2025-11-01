@@ -117,7 +117,7 @@ const storage = multer.diskStorage({
 export const upload = multer({
   storage,
   limits: {
-    fileSize: 1 * 1024 * 1024, // 1MB máximo
+    fileSize: 1 * 1024 * 1024, // 1MB máximo (OWASP A04)
   },
   fileFilter: (req, file, cb) => {
     // OWASP A04: Solo permitir tipos de imagen seguros
@@ -130,7 +130,7 @@ export const upload = multer({
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      logger.warn(`Tipo de archivo rechazado: ${file.mimetype}`);
+      logger.warn(`Tipo de archivo rechazado: ${file.mimetype}, nombre: ${file.originalname}`);
       cb(new Error('Solo se permiten imágenes JPG o PNG'));
     }
   },

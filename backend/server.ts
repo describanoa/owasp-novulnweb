@@ -246,6 +246,45 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 /**
+ * OWASP A05 - Security Misconfiguration: Middleware global de manejo de errores
+ * Evita exponer stack traces y detalles internos
+ */
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  // Log del error completo para debugging (solo en servidor)
+  logger.error(`Error no manejado: ${err.message}`, {
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
+
+  // OWASP A05: NO exponer stack trace ni detalles internos al cliente
+  // Solo enviar mensaje genérico y seguro
+  
+  // Errores de Multer (subida de archivos)
+  if (err.message === 'Solo se permiten imágenes JPG o PNG') {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  if (err.message === 'File too large') {
+    return res.status(400).json({
+      success: false,
+      message: 'La imagen no debe superar 1MB',
+    });
+  }
+
+  // Error genérico para cualquier otro caso
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Error interno del servidor' 
+      : err.message || 'Error interno del servidor',
+  });
+});
+
+/**
  * Iniciar servidor
  */
 const startServer = async () => {
