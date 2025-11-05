@@ -52,9 +52,8 @@ pnpm create astro@latest -- --template basics
 │   ├── server.ts
 │   └── utils.ts
 ├── logs/
-│   ├── combined.log
-│   └── error.log
 ├── public/
+│   └── favicon.svg
 ├── src/
 │   ├── assets/
 │   ├── components/
