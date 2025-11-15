@@ -108,6 +108,23 @@ const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunction) =>
 };
 
 /**
+ * OWASP A01 - Broken Access Control: Middleware para verificar rol de admin
+ */
+const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    logger.warn('Intento de acceso admin sin autenticación');
+    return res.status(401).json({ success: false, message: 'No autorizado' });
+  }
+  
+  if (req.user.role !== 'admin') {
+    logger.warn(`Usuario ${req.user.username} intentó acceder a ruta admin sin permisos`);
+    return res.status(403).json({ success: false, message: 'Acceso denegado: Se requiere rol de administrador' });
+  }
+  
+  next();
+};
+
+/**
  * POST /api/register
  * OWASP A03 - Injection: Validación con express-validator
  * OWASP A02 - Cryptographic Failures: Password hasheado en auth.ts
@@ -247,6 +264,117 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
  */
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
+});
+
+/**
+ * ========================================
+ * RUTAS ADMIN - Solo accesibles por administradores
+ * ========================================
+ */
+
+/**
+ * GET /api/admin/users
+ * OWASP A01 - Broken Access Control: Solo admin puede ver lista de usuarios
+ */
+app.get('/api/admin/users', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find()
+      .select('-password') // No enviar passwords
+      .sort({ createdAt: -1 }); // Más recientes primero
+    
+    logger.info(`Administrador (${req.user?.username}) consultó lista de usuarios`);
+    
+    return res.status(200).json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+      })),
+    });
+  } catch (error: any) {
+    logger.error(`Error en GET /api/admin/users: ${error.message}`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});
+
+/**
+ * GET /api/admin/stats
+ * OWASP A01 - Broken Access Control: Estadísticas solo para admin
+ */
+app.get('/api/admin/stats', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalAdmins = await User.countDocuments({ role: 'admin' });
+    const usersWithImage = await User.countDocuments({ profileImage: { $ne: null } });
+    
+    // Leer logs de errores recientes
+    const fs = await import('fs/promises');
+    const logsPath = path.join(process.cwd(), 'logs', 'error.log');
+    let recentErrors = 0;
+    
+    try {
+      const logContent = await fs.readFile(logsPath, 'utf-8');
+      const lines = logContent.trim().split('\n');
+      recentErrors = lines.length;
+    } catch (err) {
+      // Si no existe el archivo, no hay errores
+      recentErrors = 0;
+    }
+    
+    logger.info(`Administrador (${req.user?.username}) consultó estadísticas`);
+    
+    return res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalAdmins,
+        usersWithImage,
+        recentErrors,
+      },
+    });
+  } catch (error: any) {
+    logger.error(`Error en GET /api/admin/stats: ${error.message}`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});
+
+/**
+ * GET /api/admin/logs
+ * OWASP A01 - Broken Access Control: Logs solo para admin
+ * OWASP A09 - Security Logging: Acceso controlado a logs sensibles
+ */
+app.get('/api/admin/logs', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const fs = await import('fs/promises');
+    const logsPath = path.join(process.cwd(), 'logs', 'combined.log');
+    
+    const logContent = await fs.readFile(logsPath, 'utf-8');
+    const lines = logContent.trim().split('\n');
+    
+    // Últimas 100 líneas
+    const recentLogs = lines.slice(-100).reverse().map(line => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return { raw: line };
+      }
+    });
+    
+    logger.info(`Administrador (${req.user?.username}) consultó logs del sistema`);
+    
+    return res.status(200).json({
+      success: true,
+      logs: recentLogs,
+    });
+  } catch (error: any) {
+    logger.error(`Error en GET /api/admin/logs: ${error.message}`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
 });
 
 // OWASP A05 - Error handling: No revelar stack traces en producción

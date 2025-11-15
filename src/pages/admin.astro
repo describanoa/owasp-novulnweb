@@ -1,0 +1,12 @@
+---
+/**
+ * MITIGACIÓN OWASP: Panel de Administración
+ * - A01:2021 – Broken Access Control: Solo accesible por usuarios admin
+ */
+import Layout from '../layouts/Layout.astro';
+import AdminPanel from '../components/AdminPanel';
+---
+
+<Layout title="Panel Admin">
+  <AdminPanel client:load />
+</Layout>

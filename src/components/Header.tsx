@@ -5,6 +5,7 @@ const API_URL = 'http://localhost:3001';
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // Validar token con el backend
@@ -41,7 +42,12 @@ export default function Header() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         setIsAuthenticated(true);
+        // Verificar si es admin
+        if (data.user && data.user.role === 'admin') {
+          setIsAdmin(true);
+        }
       } else {
         // Token inválido o expirado
         localStorage.removeItem('token');
@@ -77,6 +83,11 @@ export default function Header() {
               <a href="/profile" className="text-gray-700 hover:text-blue-600">
                 Mi Perfil
               </a>
+              {isAdmin && (
+                <a href="/admin" className="text-purple-600 font-semibold hover:text-purple-700">
+                  👨‍💼 Admin
+                </a>
+              )}
               <button
                 onClick={handleLogout}
                 className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
