@@ -24,6 +24,7 @@ import {
   checkValidation,
   logger,
 } from './utils.js';
+import { time } from 'console';
 
 dotenv.config();
 
@@ -121,12 +122,11 @@ app.post(
       const { username, email, password } = req.body;
       const result = await registerUser(username, email, password);
       
-      if (!result.success) {
+      if (result.success) {
+        return res.status(201).json(result);
+      } else {
         return res.status(400).json(result);
       }
-      
-      logger.info(`Usuario registrado: ${username}`);
-      res.json(result);
     } catch (error: any) {
       logger.error(`Error en /api/register: ${error.message}`);
       res.status(500).json({ success: false, message: 'Error del servidor' });
@@ -148,12 +148,11 @@ app.post(
       const { username, password } = req.body;
       const result = await loginUser(username, password);
       
-      if (!result.success) {
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
         return res.status(401).json(result);
       }
-      
-      logger.info(`Login exitoso: ${username}`);
-      res.json(result);
     } catch (error: any) {
       logger.error(`Error en /api/login: ${error.message}`);
       res.status(500).json({ success: false, message: 'Error del servidor' });
@@ -173,12 +172,14 @@ app.get('/api/profile', authenticateJWT, async (req: AuthRequest, res: Response)
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
     
-    res.json({
+    return res.status(200).json({
       success: true,
       user: {
         username: user.username,
         email: user.email,
         profileImage: user.profileImage,
+        role: user.role,
+        createdAt: user.createdAt,
       },
     });
   } catch (error: any) {
@@ -189,19 +190,20 @@ app.get('/api/profile', authenticateJWT, async (req: AuthRequest, res: Response)
 
 /**
  * POST /api/profile/upload
- * OWASP A04 - Insecure Design: Multer + Sharp para subida segura
+ * OWASP A08 - Integrity Failures: Validación estricta de uploads
+ * OWASP A01 - Broken Access Control: Solo usuarios autenticados
  */
 app.post(
   '/api/profile/upload',
   authenticateJWT,
-  upload.single('image'),
+  upload.single('profileImage'),
   async (req: AuthRequest, res: Response) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ success: false, message: 'No se recibió imagen' });
+        return res.status(400).json({ success: false, message: 'No se subió ningún archivo' });
       }
       
-      // Procesar imagen con Sharp (re-codificar)
+      // OWASP A08 - Integrity: Procesar imagen con Sharp
       const processedPath = await processImage(req.file.path);
       const filename = path.basename(processedPath);
       
@@ -211,15 +213,17 @@ app.post(
         return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
       }
       
-      user.profileImage = `/uploads/${filename}`;
+      // Guardar ruta relativa de la imagen
+      const imagePath = `/uploads/${filename}`;
+      user.profileImage = imagePath;
       await user.save();
       
-      logger.info(`Imagen subida: ${filename} por ${user.username}`);
+      logger.info(`Imagen de perfil actualizada para usuario: ${user.username}`);
       
-      res.json({
+      return res.status(200).json({
         success: true,
-        message: 'Imagen subida exitosamente',
-        profileImage: user.profileImage,
+        message: 'Imagen subida correctamente',
+        profileImage: imagePath,
       });
     } catch (error: any) {
       logger.error(`Error en /api/profile/upload: ${error.message}`);
@@ -242,57 +246,30 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
  * Health check
  */
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.status(200).json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
 });
 
-/**
- * OWASP A05 - Security Misconfiguration: Middleware global de manejo de errores
- * Evita exponer stack traces y detalles internos
- */
+// OWASP A05 - Error handling: No revelar stack traces en producción
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  // Log del error completo para debugging (solo en servidor)
-  logger.error(`Error no manejado: ${err.message}`, {
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-  });
-
-  // OWASP A05: NO exponer stack trace ni detalles internos al cliente
-  // Solo enviar mensaje genérico y seguro
+  logger.error(`Error no manejado: ${err.message}`, { stack: err.stack });
   
-  // Errores de Multer (subida de archivos)
-  if (err.message === 'Solo se permiten imágenes JPG o PNG') {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
-  }
-
-  if (err.message === 'File too large') {
-    return res.status(400).json({
-      success: false,
-      message: 'La imagen no debe superar 1MB',
-    });
-  }
-
-  // Error genérico para cualquier otro caso
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Error del servidor' 
+    : err.message;
+  
   res.status(err.status || 500).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Error interno del servidor' 
-      : err.message || 'Error interno del servidor',
+    message,
   });
 });
 
-/**
- * Iniciar servidor
- */
+// Conectar a DB y arrancar servidor
 const startServer = async () => {
   await connectDB();
   
   app.listen(PORT, () => {
-    logger.info(`🚀 Servidor backend corriendo en http://localhost:${PORT}`);
-    console.log(`🚀 Servidor backend corriendo en http://localhost:${PORT}`);
+    logger.info(`🚀 Backend server running on http://localhost:${PORT}`);
+    logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 };
 

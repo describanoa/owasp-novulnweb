@@ -14,11 +14,21 @@ export default function ProfileForm() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Cargar datos del usuario
   useEffect(() => {
     loadProfile();
   }, []);
+
+  // Limpiar objeto URL al desmontar componente (OWASP A04 - prevenir memory leaks)
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const loadProfile = async () => {
     const token = localStorage.getItem('token');
@@ -83,7 +93,7 @@ export default function ProfileForm() {
     }
 
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('profileImage', file);
 
     const token = localStorage.getItem('token');
 
@@ -110,11 +120,56 @@ export default function ProfileForm() {
       // Recargar perfil para ver la nueva imagen
       loadProfile();
 
+      // Limpiar preview y input
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+        setImagePreview(null);
+      }
       fileInput.value = '';
     } catch (err) {
       setError('Error de conexión con el servidor');
       setUploading(false);
     }
+  };
+
+  /**
+   * Manejar cambio de archivo y mostrar preview
+   * OWASP A03 - Injection: Validar tipo de archivo antes de preview
+   * OWASP A08 - Integrity Failures: Solo archivos de imagen válidos
+   */
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    
+    // Limpiar preview anterior
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+
+    if (!file) {
+      return;
+    }
+
+    // OWASP A03 - Validar tipo MIME antes de crear preview
+    if (!file.type.match(/image\/(jpeg|jpg|png)/)) {
+      setError('Solo se permiten imágenes JPG o PNG');
+      e.target.value = '';
+      return;
+    }
+
+    // OWASP A08 - Validar tamaño antes de crear preview
+    if (file.size > 1 * 1024 * 1024) {
+      setError('La imagen no puede superar 1MB');
+      e.target.value = '';
+      return;
+    }
+
+    // Limpiar errores previos
+    setError('');
+    
+    // OWASP A04 - Usar createObjectURL (seguro, no ejecuta código)
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
   };
 
   if (loading) {
@@ -185,19 +240,35 @@ export default function ProfileForm() {
 
           <div>
             <label
-              htmlFor="image"
+              htmlFor="profileImage"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Seleccionar imagen
             </label>
-            <input
-              type="file"
-              id="image"
-              name="image"
-              accept="image/jpeg,image/jpg,image/png"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={uploading}
-            />
+            
+            <div className="flex items-center gap-4">
+              <input
+                type="file"
+                id="profileImage"
+                name="profileImage"
+                accept="image/jpeg,image/jpg,image/png"
+                onChange={handleFileChange}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={uploading}
+              />
+              
+              {/* Preview de la imagen seleccionada */}
+              {imagePreview && (
+                <div className="flex-shrink-0">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-gray-300"
+                  />
+                </div>
+              )}
+            </div>
+            
             <p className="text-xs text-gray-500 mt-1">
               JPG o PNG, máximo 1MB
             </p>
