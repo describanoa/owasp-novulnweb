@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import winston from 'winston';
+import { randomUUID } from 'crypto';
 
 /**
  * OWASP A09 - Security Logging: Winston para logs de seguridad
@@ -109,8 +110,8 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+    const uniqueName = randomUUID();
+    cb(null, 'profile-' + uniqueName + path.extname(file.originalname));
   },
 });
 
@@ -142,9 +143,11 @@ export const upload = multer({
  */
 export const processImage = async (filePath: string): Promise<string> => {
   try {
-    const processedPath = filePath.replace(
-      path.extname(filePath),
-      '-processed.jpg'
+    // Generar nuevo nombre con UUID sin sufijo -processed
+    const uniqueName = randomUUID();
+    const processedPath = path.join(
+      path.dirname(filePath),
+      'profile-' + uniqueName + '.jpg'
     );
 
     // Re-codificar imagen a JPEG limpio con fondo blanco para transparencias
