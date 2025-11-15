@@ -1,22 +1,59 @@
 import { useEffect, useState } from 'react';
 
+const API_URL = 'http://localhost:3001';
+
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay token en el localStorage
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    // Validar token con el backend
+    validateToken();
 
     // Revisar cambios en el storage (login/logout)
     const handleStorageChange = () => {
-      const token = localStorage.getItem('token');
-      setIsAuthenticated(!!token);
+      validateToken();
     };
 
     globalThis.addEventListener('storage', handleStorageChange);
     return () => globalThis.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  /**
+   * Validar token con el backend
+   * OWASP A07 - Identification Failures: Validar token antes de mostrar UI autenticada
+   */
+  const validateToken = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      setIsAuthenticated(false);
+      setIsValidating(false);
+      return;
+    }
+
+    try {
+      // Validar el token con el backend
+      const response = await fetch(`${API_URL}/api/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+      } else {
+        // Token inválido o expirado
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      // Error de conexión - asumir no autenticado
+      setIsAuthenticated(false);
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -32,7 +69,10 @@ export default function Header() {
         </a>
         
         <div className="space-x-4">
-          {isAuthenticated ? (
+          {/* Mostrar loading mientras valida el token */}
+          {isValidating ? (
+            <span className="text-gray-500">Cargando...</span>
+          ) : isAuthenticated ? (
             <>
               <a href="/profile" className="text-gray-700 hover:text-blue-600">
                 Mi Perfil

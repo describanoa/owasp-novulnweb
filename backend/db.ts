@@ -9,23 +9,29 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const MONGO_URI = process.env.MONGO_URI || '';
+
+if (!MONGO_URI) {
+  console.error('ERROR: MONGO_URI no está configurada en .env');
+  process.exit(1);
+}
+
 /**
  * Conectar a MongoDB Atlas
  * OWASP A02 - Cryptographic Failures: Usa TLS/SSL por defecto en mongodb+srv://
  */
-export const connectDB = async () => {
+export const connectDB = async (): Promise<void> => {
   try {
-    const uri = process.env.MONGODB_URI;
-    
-    if (!uri) {
-      throw new Error('MONGODB_URI no está definida en .env');
-    }
-
-    await mongoose.connect(uri);
-    console.log('MongoDB conectado exitosamente');
-  } catch (error: any) {
-    console.error('Error conectando a MongoDB:', error.message);
-    process.exit(1); // Salir si no hay DB
+    await mongoose.connect(MONGO_URI, {
+      // Opciones de seguridad
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log('MongoDB conectado correctamente');
+  } catch (error) {
+    console.error('Error conectando a MongoDB:', error);
+    process.exit(1);
   }
 };
 
