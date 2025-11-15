@@ -1,14 +1,84 @@
 ---
+/**
+ * MITIGACIÓN OWASP: Página principal
+ * - Contenido estático seguro
+ * - Links a login/register
+ */
 import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero';
 ---
 
 <Layout title="Inicio - App Segura">
-  <main class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-center text-gray-800">
-      🔒 Aplicación Web Segura
-    </h1>
-    <p class="text-center text-gray-600 mt-4">
-      Proyecto con mitigación OWASP Top 10
-    </p>
-  </main>
+	<Hero client:load />
+	
+	<section class="container mx-auto px-4 py-16">
+		<h2 class="text-3xl font-bold text-center mb-12 text-gray-900">
+			Seguridad OWASP Top 10 Implementada
+		</h2>
+		
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A01 - Broken Access Control</h3>
+				<p class="text-gray-600">
+					✅ JWT tokens, rutas protegidas, verificación de autorización
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A02 - Cryptographic Failures</h3>
+				<p class="text-gray-600">
+					✅ Bcrypt para passwords, conexión TLS/SSL a MongoDB
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A03 - Injection</h3>
+				<p class="text-gray-600">
+					✅ Queries parametrizadas, validación y sanitización de inputs
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-yellow-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A05 - Security Misconfiguration</h3>
+				<p class="text-gray-600">
+					✅ Helmet middleware, headers seguros, sin información sensible
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A07 - Identification Failures</h3>
+				<p class="text-gray-600">
+					✅ Rate limiting, passwords fuertes, validación robusta
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-indigo-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A08 - Integrity Failures</h3>
+				<p class="text-gray-600">
+					✅ Validación de uploads, MIME types, procesamiento con Sharp
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-pink-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A09 - Logging Failures</h3>
+				<p class="text-gray-600">
+					✅ Winston logger, registro de eventos de seguridad
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-teal-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">A10 - SSRF</h3>
+				<p class="text-gray-600">
+					✅ Validación de URLs, solo conexiones a API conocida
+				</p>
+			</div>
+			
+			<div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-600">
+				<h3 class="text-xl font-bold mb-2 text-gray-900">Dependencias Seguras</h3>
+				<p class="text-gray-600">
+					✅ Versiones pinned, actualizaciones regulares
+				</p>
+			</div>
+		</div>
+	</section>
 </Layout>

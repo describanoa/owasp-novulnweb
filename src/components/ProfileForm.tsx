@@ -6,6 +6,8 @@ type UserData = {
   username: string;
   email: string;
   profileImage?: string;
+  role: string;
+  createdAt: string;
 }
 
 export default function ProfileForm() {
@@ -196,15 +198,31 @@ export default function ProfileForm() {
           Información de la cuenta
         </h2>
         
-        <div className="space-y-3">
-          <div>
+        <div className="space-y-4">
+          <div className="border-b pb-3">
             <label className="text-sm font-medium text-gray-600">Usuario</label>
-            <p className="text-lg text-gray-800">{user.username}</p>
+            <p className="text-lg text-gray-800 font-semibold">{user.username}</p>
           </div>
           
-          <div>
+          <div className="border-b pb-3">
             <label className="text-sm font-medium text-gray-600">Email</label>
-            <p className="text-lg text-gray-800">{user.email}</p>
+            <p className="text-lg text-gray-800 font-semibold">{user.email}</p>
+          </div>
+          
+          <div className="border-b pb-3">
+            <label className="text-sm font-medium text-gray-600">Rol</label>
+            <p className="text-lg text-gray-800 font-semibold capitalize">{user.role}</p>
+          </div>
+          
+          <div className="pb-3">
+            <label className="text-sm font-medium text-gray-600">Miembro desde</label>
+            <p className="text-lg text-gray-800 font-semibold">
+              {new Date(user.createdAt).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </p>
           </div>
         </div>
       </div>
@@ -215,15 +233,19 @@ export default function ProfileForm() {
           Foto de perfil
         </h2>
 
-        {user.profileImage && (
-          <div className="mb-4 flex justify-center">
+        <div className="mb-4 flex justify-center">
+          {user.profileImage ? (
             <img
               src={`${API_URL}${user.profileImage}`}
               alt="Perfil"
               className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-32 h-32 rounded-full bg-white border-4 border-blue-500 flex items-center justify-center">
+              <span className="text-5xl text-gray-400">👤</span>
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleImageUpload} className="space-y-4">
           {error && (

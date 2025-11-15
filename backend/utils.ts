@@ -147,9 +147,10 @@ export const processImage = async (filePath: string): Promise<string> => {
       '-processed.jpg'
     );
 
-    // Re-codificar imagen a JPEG limpio
+    // Re-codificar imagen a JPEG limpio con fondo blanco para transparencias
     await sharp(filePath)
       .resize(500, 500, { fit: 'cover' }) // Redimensionar
+      .flatten({ background: { r: 255, g: 255, b: 255 } }) // Fondo blanco para PNGs con transparencia
       .jpeg({ quality: 90 }) // Convertir a JPEG
       .toFile(processedPath);
 
