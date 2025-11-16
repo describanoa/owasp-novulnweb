@@ -135,6 +135,49 @@ export default function ProfileForm() {
   };
 
   /**
+   * Eliminar imagen de perfil
+   * OWASP A01 - Broken Access Control: Solo el propietario puede eliminar su imagen
+   */
+  const handleDeleteImage = async () => {
+    // Confirmación antes de eliminar
+    if (!confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setUploading(true);
+
+    const token = localStorage.getItem('token');
+
+    try {
+      const response = await fetch(`${API_URL}/api/profile/image`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.message || 'Error al eliminar imagen');
+        setUploading(false);
+        return;
+      }
+
+      setSuccess('Imagen eliminada correctamente');
+      setUploading(false);
+
+      // Recargar perfil
+      loadProfile();
+    } catch (err) {
+      setError('Error de conexión con el servidor');
+      setUploading(false);
+    }
+  };
+
+  /**
    * Manejar cambio de archivo y mostrar preview
    * OWASP A03 - Injection: Validar tipo de archivo antes de preview
    * OWASP A08 - Integrity Failures: Solo archivos de imagen válidos
@@ -304,6 +347,20 @@ export default function ProfileForm() {
             {uploading ? 'Subiendo...' : 'Subir imagen'}
           </button>
         </form>
+
+        {/* Botón para eliminar imagen (solo si existe) */}
+        {user.profileImage && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleDeleteImage}
+              disabled={uploading}
+              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-400"
+            >
+              {uploading ? 'Eliminando...' : '🗑️ Eliminar foto de perfil'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

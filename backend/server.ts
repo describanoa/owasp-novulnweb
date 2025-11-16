@@ -249,6 +249,52 @@ app.post(
   }
 );
 
+/**
+ * DELETE /api/profile/image
+ * OWASP A01 - Broken Access Control: Solo el propietario puede eliminar su imagen
+ * OWASP A04 - Insecure Design: Eliminar archivo físico del servidor
+ */
+app.delete('/api/profile/image', authenticateJWT, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.user?.userId);
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+    
+    // Verificar que el usuario tiene imagen
+    if (!user.profileImage) {
+      return res.status(400).json({ success: false, message: 'No hay imagen de perfil para eliminar' });
+    }
+    
+    // OWASP A04 - Eliminar archivo físico del servidor
+    const fs = await import('fs');
+    const imagePath = path.join(process.cwd(), 'uploads', path.basename(user.profileImage));
+    
+    // Verificar que el archivo existe antes de intentar eliminarlo
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+      logger.info(`Archivo físico eliminado: ${imagePath}`);
+    } else {
+      logger.warn(`Archivo no encontrado en disco: ${imagePath}`);
+    }
+    
+    // Actualizar usuario en BD
+    user.profileImage = undefined as any;
+    await user.save();
+    
+    logger.info(`Imagen de perfil eliminada para usuario: ${user.username}`);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Imagen eliminada correctamente',
+    });
+  } catch (error: any) {
+    logger.error(`Error en DELETE /api/profile/image: ${error.message}`);
+    res.status(500).json({ success: false, message: 'Error al eliminar imagen' });
+  }
+});
+
 // OWASP A05 - CORS para uploads (debe ir ANTES de servir archivos)
 app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
   res.header('Access-Control-Allow-Origin', FRONTEND_URL);
