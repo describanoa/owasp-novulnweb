@@ -24,7 +24,7 @@ import {
   checkValidation,
   logger,
 } from './utils.js';
-import { time } from 'console';
+import vulnerabilityRoutes from './vulnerabilities/routes.js';
 
 dotenv.config();
 
@@ -313,9 +313,12 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 /**
- * ========================================
+ * RUTAS DE VULNERABILIDADES - API Educativa OWASP Top 10
+ */
+app.use('/api/vulnerabilities', vulnerabilityRoutes);
+
+/**
  * RUTAS ADMIN - Solo accesibles por administradores
- * ========================================
  */
 
 /**
