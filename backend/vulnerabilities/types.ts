@@ -26,12 +26,10 @@ export type CodeExample = {
   vulnerable: {
     code: string;
     explanation: string;
-    issues: string[];
   };
   secure: {
     code: string;
     explanation: string;
-    mitigations: string[];
   };
 }
 

@@ -61,12 +61,77 @@ export const A05_SecurityMisconfiguration: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Headers de Seguridad y Manejo de Errores',
+      language: 'typescript',
+      vulnerable: {
+        code: `const app = express();
+app.use(express.json());
+app.use(cors({ origin: '*' })); // CORS abierto a todos
+
+app.get('/api/data', async (req, res) => {
+  const data = await fetchData();
+  res.json(data);
+});
+
+app.use((err, req, res, next) => {
+  res.status(500).json({
+    error: err.message,
+    stack: err.stack
+  });
+});`,
+        explanation: 'Sin headers de seguridad, la app es vulnerable a XSS, clickjacking y otros ataques. CORS abierto permite acceso desde cualquier origen. Los stack traces exponen información del servidor que ayuda a los atacantes.',
+      },
+      secure: {
+        code: `import helmet from 'helmet';
+import cors from 'cors';
+import { logger } from './utils.js';
+
+const app = express();
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4321';
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:3001"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
+app.use(cors({
+  origin: FRONTEND_URL,
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '10kb' }));
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  logger.error(\`Error no manejado: \${err.message}\`, { stack: err.stack });
+  
+  const message = process.env.NODE_ENV === 'production' 
+    ? 'Error del servidor' 
+    : err.message;
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message,
+  });
+});`,
+        explanation: 'Helmet configura automáticamente headers de seguridad (CSP, X-Frame-Options, HSTS, etc.). CORS está restringido solo al frontend autorizado. Los errores se loggean internamente pero no exponen stack traces en producción. Límite de payload JSON a 10kb previene ataques de payload gigante.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/server.ts - Helmet configuration, error handling',
+    location: 'backend/server.ts - Configuración de Helmet y manejo de errores',
     testEndpoint: '/api/health',
-    description: 'Helmet for security headers (CSP, X-Frame-Options, HSTS). Production mode hides stack traces. CORS properly configured.',
+    description: 'Helmet para cabeceras de seguridad (CSP, X-Frame-Options, HSTS). En modo producción se ocultan los stack traces. CORS correctamente configurado.',
   },
 };

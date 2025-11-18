@@ -98,7 +98,7 @@ export const registerUser = async (
  */
 export const loginUser = async (username: string, password: string) => {
   try {
-    // Buscar usuario por username y INCLUIR password (select: false en schema)
+    // Buscar usuario por username e INCLUIR password
     const user = await User.findOne({ username }).select('+password');
 
     if (!user) {

@@ -59,12 +59,95 @@ export const A07_IdentificationFailures: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Autenticación JWT y Prevención de Fuerza Bruta',
+      language: 'typescript',
+      vulnerable: {
+        code: `import jwt from 'jsonwebtoken';
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findOne({ username });
+  
+  if (user && password === user.password) {
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET);
+    return res.json({ token });
+  }
+  
+  return res.status(401).json({ message: 'Invalid credentials' });
+});`,
+        explanation: 'Los tokens JWT sin expiración permanecen válidos indefinidamente. Sin rate limiting, los atacantes pueden intentar miles de combinaciones de credenciales. Las contraseñas se comparan directamente sin hashing.',
+      },
+      secure: {
+        code: `import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // 5 intentos
+  message: 'Demasiados intentos de login/registro, intenta más tarde',
+  skipSuccessfulRequests: true,
+});
+
+export const loginUser = async (username: string, password: string) => {
+  try {
+    const user = await User.findOne({ username }).select('+password');
+
+    if (!user) {
+      logger.warn(\`Intento de login fallido - usuario no existe: \${username}\`);
+      throw new Error('Credenciales inválidas');
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      logger.warn(\`Intento de login fallido - password incorrecto: \${username}\`);
+      throw new Error('Credenciales inválidas');
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        username: user.username,
+        role: user.role,
+      } as JWTPayload,
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    logger.info(\`Login exitoso: \${username}\`);
+
+    return {
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    };
+  } catch (error: any) {
+    logger.error(\`Error en loginUser: \${error.message}\`);
+    return {
+      success: false,
+      message: error.message || 'Error al iniciar sesión',
+    };
+  }
+};`,
+        explanation: 'Los tokens JWT expiran automáticamente después de 24 horas, minimizando la ventana de oportunidad para atacantes. Rate limiting limita a 5 intentos cada 15 minutos, previniendo fuerza bruta. Uso de bcrypt para comparación segura de contraseñas. Los mensajes de error no revelan si el usuario existe.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/auth.ts - JWT authentication, backend/server.ts - Rate limiting',
+    location: 'backend/auth.ts - Autenticación con JWT, backend/server.ts - Limitación de velocidad (rate limiting)',
     testEndpoint: '/api/login',
-    description: 'JWT tokens with expiration (24h). Rate limiting (5 attempts/15min). Bcrypt password hashing. Session validation on each request.',
+    description: 'Tokens JWT con expiración (24 h). Rate limiting (5 intentos cada 15 minutos). Hash de contraseñas con Bcrypt. Validación de sesión en cada solicitud',
   },
 };

@@ -1,0 +1,111 @@
+---
+/**
+ * Página índice de vulnerabilidades OWASP Top 10
+ * Muestra la lista completa con enlaces a cada detalle
+ */
+import Layout from '../../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+
+// Fetch de las vulnerabilidades desde nuestra API
+
+const API_URL = 'http://localhost:3001';
+const response = await fetch(`${API_URL}/api/vulnerabilities`);
+const { success, data: vulnerabilities } = await response.json();
+
+if (!success || !vulnerabilities) {
+  return Astro.redirect('/');
+}
+---
+
+<Layout title="OWASP Top 10 2021 - Vulnerabilidades">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-gray-800 to-red-400 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-5xl font-bold mb-4">OWASP Top 10 2021</h1>
+        <p class="text-xl max-w-3xl">
+          Las 10 vulnerabilidades de seguridad más críticas en aplicaciones web, 
+          con ejemplos reales y cómo las hemos mitigado en esta aplicación.
+        </p>
+      </div>
+    </div>
+
+    <!-- Lista de vulnerabilidades -->
+    <div class="container mx-auto px-4 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-7xl mx-auto">
+        {vulnerabilities.map((vuln: any) => (
+          <a 
+            href={`/vulnerabilities/${vuln.shortTitle}`}
+            class="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-transparent hover:border-red-500"
+          >
+            <!-- Header con icono y código -->
+            <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4 flex items-center justify-between">
+              <div class="flex items-center gap-4">
+                <Image 
+                  src={vuln.icon} 
+                  alt={vuln.title}
+                  width="48"
+                  height="48"
+                  loading="eager"
+                  class="w-12 h-12 object-contain"
+                />
+                <div>
+                  <span class="text-red-400 font-bold text-lg">{vuln.code}</span>
+                  <p class="text-gray-300 text-sm">Rank #{vuln.rank}</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-red-400 font-semibold text-lg">{vuln.incidenceRate}</p>
+                <p class="text-gray-400 text-xs">Incidencia</p>
+              </div>
+            </div>
+
+            <!-- Contenido -->
+            <div class="p-6">
+              <h2 class="text-2xl font-bold text-gray-900 mb-3 group-hover:text-red-600 transition-colors">
+                {vuln.title}
+              </h2>
+              <p class="text-gray-600 line-clamp-3 mb-4">
+                {vuln.description}
+              </p>
+              
+              <!-- Footer con arrow -->
+              <div class="flex items-center justify-between">
+                <span class="text-red-600 group-hover:translate-x-2 transition-transform inline-flex items-center gap-2">
+                  Ver detalles
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Nota sobre implementación -->
+      <div class="mt-16 mb-8 max-w-4xl mx-auto bg-blue-50 border-2 border-blue-200 rounded-xl p-8">
+        <div class="flex items-start gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-blue-900 mb-2">
+              Implementaciones Reales
+            </h3>
+            <p class="text-blue-800">
+              Cada vulnerabilidad incluye ejemplos de cómo la he mitigado en esta aplicación,
+              con referencias al código real y endpoints para probar las protecciones implementadas.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

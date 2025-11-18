@@ -56,12 +56,140 @@ export const A09_LoggingFailures: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Logging de Eventos de Seguridad',
+      language: 'typescript',
+      vulnerable: {
+        code: `app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await loginUser(username, password);
+  
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  
+  return res.json({ token: user.token });
+});
+
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  const users = await User.find();
+  return res.json({ users });
+});`,
+        explanation: 'Sin logging, es imposible detectar ataques de fuerza bruta, accesos no autorizados, o patrones sospechosos. No hay registro de quién accedió a qué recursos ni cuándo. Los administradores no pueden auditar actividad.',
+      },
+      secure: {
+        code: `import winston from 'winston';
+
+export const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+    }),
+    new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+    }),
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  logger.info(\`\${req.method} \${req.path} - IP: \${req.ip}\`);
+  next();
+});
+
+app.post(
+  '/api/login',
+  authLimiter,
+  validateLogin,
+  checkValidation,
+  async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      const result = await loginUser(username, password);
+      
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(401).json(result);
+      }
+    } catch (error: any) {
+      logger.error(\`Error en /api/login: \${error.message}\`);
+      res.status(500).json({ success: false, message: 'Error del servidor' });
+    }
+  }
+);
+
+app.get('/api/admin/users', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    logger.info(\`Administrador (\${req.user?.username}) consultó lista de usuarios\`);
+    
+    return res.status(200).json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+      })),
+    });
+  } catch (error: any) {
+    logger.error(\`Error en GET /api/admin/users: \${error.message}\`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});
+
+app.get('/api/admin/logs', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const fs = await import('fs/promises');
+    const logsPath = path.join(process.cwd(), 'logs', 'combined.log');
+    
+    const logContent = await fs.readFile(logsPath, 'utf-8');
+    const lines = logContent.trim().split('\n');
+    
+    const recentLogs = lines.slice(-100).reverse().map(line => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return { raw: line };
+      }
+    });
+    
+    logger.info(\`Administrador (\${req.user?.username}) consultó logs del sistema\`);
+    
+    return res.status(200).json({
+      success: true,
+      logs: recentLogs,
+    });
+  } catch (error: any) {
+    logger.error(\`Error en GET /api/admin/logs: \${error.message}\`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});`,
+        explanation: 'Winston registra todos los eventos importantes: requests HTTP, logins exitosos/fallidos, accesos a rutas admin y errores. Los logs usan formato JSON estructurado con timestamps para facilitar el análisis. Se separan los logs de error en su archivo dedicado. Los administradores pueden revisar logs desde el panel admin para auditar actividad y detectar patrones sospechosos.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/utils.ts - Winston logger, backend/server.ts - Request logging middleware',
+    location: 'backend/utils.ts - Logger con Winston, backend/server.ts - Middleware de registro de solicitudes',
     testEndpoint: '/api/login',
-    description: 'Winston logger with JSON format. All requests logged with IP. Failed logins, access control failures, and errors logged. Admin can view logs.',
+    description: 'Logger Winston con formato JSON. Todas las solicitudes se registran con la IP. Se registran los intentos de inicio de sesión fallidos, fallos de control de acceso y errores. El administrador puede ver los registros.',
   },
 };

@@ -57,12 +57,82 @@ export const A02_CryptographicFailures: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Almacenamiento Seguro de Contraseñas',
+      language: 'typescript',
+      vulnerable: {
+        code: `const user = new User({
+  username: 'john',
+  password: req.body.password
+});
+await user.save();`,
+        explanation: 'Las contraseñas se almacenan en texto plano en la base de datos. Si la BD es comprometida, todas las contraseñas quedan expuestas inmediatamente.',
+      },
+      secure: {
+        code: `import bcrypt from 'bcryptjs';
+
+const SALT_ROUNDS = 12; // OWASP recomienda 10-12 rondas
+
+export const registerUser = async (
+  username: string,
+  email: string,
+  password: string
+) => {
+  try {
+    const existingUser = await User.findOne({
+      $or: [{ email }, { username }],
+    });
+    if (existingUser) {
+      throw new Error('El usuario o email ya existe');
+    }
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    const user = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+    await user.save();
+
+    logger.info(\`Usuario registrado exitosamente: \${username}\`);
+
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        username: user.username,
+        role: user.role,
+      } as JWTPayload,
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    return {
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    };
+  } catch (error: any) {
+    logger.error(\`Error en registerUser: \${error.message}\`);
+    return {
+      success: false,
+      message: error.message || 'Error al registrar usuario',
+    };
+  }
+};`,
+        explanation: 'Uso bcrypt con 12 rondas de salt para hashear contraseñas. Bcrypt es un algoritmo adaptativo diseñado para ser computacionalmente costoso, lo que dificulta ataques de fuerza bruta. Las contraseñas nunca se almacenan en texto plano.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/auth.ts - bcrypt password hashing with 12 salt rounds',
+    location: 'backend/auth.ts - Contraseñas hasheadas con bcrypt (12 rondas)',
     testEndpoint: '/api/register',
-    description: 'Passwords hashed with bcrypt (12 rounds). JWT tokens for session management. MongoDB connection uses TLS.',
+    description: 'Contraseñas hasheadas con bcrypt (12 rondas). Tokens JWT para gestión de sesiones. La conexión a MongoDB usa TLS.',
   },
 };

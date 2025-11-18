@@ -5,7 +5,7 @@ export const A10_SSRF: Vulnerability = {
   code: 'A10:2021',
   title: 'Server-Side Request Forgery (SSRF)',
   shortTitle: 'ssrf',
-  icon: '/A10-.webp',
+  icon: '/A10.webp',
   owaspUrl: 'https://owasp.org/Top10/A10_2021-Server-Side_Request_Forgery_%28SSRF%29/',
   
   overview: {
@@ -62,7 +62,101 @@ export const A10_SSRF: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Prevención de SSRF en Fetching de URLs',
+      language: 'typescript',
+      vulnerable: {
+        code: `// ❌ VULNERABLE: Fetch URL sin validación
+import axios from 'axios';
+
+app.post('/api/fetch-url', async (req, res) => {
+  const { url } = req.body;
+  
+  // Fetch directo de URL proporcionada por usuario
+  const response = await axios.get(url);
+  
+  return res.json({ data: response.data });
+});
+
+// Ejemplos de ataques:
+// POST /api/fetch-url {"url": "http://169.254.169.254/latest/meta-data/"}
+// POST /api/fetch-url {"url": "file:///etc/passwd"}
+// POST /api/fetch-url {"url": "http://localhost:27017/admin"}
+// POST /api/fetch-url {"url": "http://internal-service.local/api/admin"}`,
+        explanation: 'Permitir que usuarios especifiquen URLs arbitrarias permite SSRF. Atacantes pueden: 1) Acceder a metadata de cloud (AWS, Azure, GCP), 2) Escanear puertos internos, 3) Leer archivos locales, 4) Acceder a servicios internos protegidos por firewall, 5) Ejecutar comandos en servicios internos vulnerables.',
+      },
+      secure: {
+        code: `// ✅ SEGURO: No implementado en esta app (no necesario)
+// Esta aplicación NO permite a usuarios proporcionar URLs para fetch.
+// Si en el futuro se necesitara esta funcionalidad, así se implementaría:
+
+import axios from 'axios';
+import { URL } from 'url';
+
+// Whitelist de dominios permitidos
+const ALLOWED_DOMAINS = [
+  'api.example.com',
+  'cdn.example.com',
+];
+
+const BLOCKED_IPS = [
+  '127.0.0.1',      // localhost
+  '0.0.0.0',
+  '169.254.169.254', // AWS metadata
+  '::1',             // IPv6 localhost
+];
+
+const validateUrl = (urlString) => {
+  try {
+    const url = new URL(urlString);
+    
+    // Solo permitir HTTP/HTTPS
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Protocolo no permitido');
+    }
+    
+    // Verificar contra whitelist
+    if (!ALLOWED_DOMAINS.includes(url.hostname)) {
+      throw new Error('Dominio no autorizado');
+    }
+    
+    // Verificar IPs bloqueadas
+    if (BLOCKED_IPS.includes(url.hostname)) {
+      throw new Error('IP bloqueada');
+    }
+    
+    return url.href;
+  } catch (error) {
+    throw new Error('URL inválida');
+  }
+};
+
+app.post('/api/fetch-url', authenticateJWT, async (req, res) => {
+  const { url } = req.body;
+  
+  // Validar URL contra whitelist
+  const validatedUrl = validateUrl(url);
+  
+  // Fetch con timeout y sin seguir redirects
+  const response = await axios.get(validatedUrl, {
+    timeout: 5000,
+    maxRedirects: 0,
+    validateStatus: (status) => status === 200,
+  });
+  
+  logger.info(\`Usuario \${req.user.username} fetch URL: \${validatedUrl}\`);
+  
+  // No devolver respuesta raw - solo datos procesados
+  return res.json({ 
+    success: true,
+    dataLength: response.data.length 
+  });
+});`,
+        explanation: 'NOTA: Esta app NO implementa fetching de URLs, así que SSRF no es aplicable. Si fuera necesario, implementaríamos: 1) Whitelist estricta de dominios permitidos, 2) Validación de protocolo (solo HTTP/HTTPS), 3) Bloquear IPs privadas y metadata, 4) Deshabilitar redirects, 5) Timeout corto, 6) No devolver respuestas raw al cliente, 7) Logging de todas las requests.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: false,

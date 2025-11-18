@@ -13,14 +13,14 @@ export default function Hero() {
           Proyecto universitario con mitigación completa del OWASP Top 10 (2021).
           Login, registro y perfil con las mejores prácticas de seguridad.
         </p>
-        
+
         <div className="flex gap-4 justify-center items-center flex-wrap">
-          <button 
-            disabled
-            className="bg-gray-400 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-not-allowed shadow-lg"
+          <a 
+            href="/vulnerabilities"
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg"
           >
-            Próximamente...
-          </button>
+            Vulnerabilidades
+          </a>
           <button 
             disabled
             className="bg-gray-300 text-gray-600 px-8 py-3 rounded-lg text-lg font-semibold cursor-not-allowed shadow-lg border-2 border-gray-400"

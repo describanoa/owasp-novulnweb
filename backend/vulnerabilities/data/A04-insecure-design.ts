@@ -59,12 +59,122 @@ export const A04_InsecureDesign: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Rate Limiting y Límites de Recursos',
+      language: 'typescript',
+      vulnerable: {
+        code: `app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = await loginUser(username, password);
+  return res.json({ token: user.token });
+});
+
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  await processFile(req.file);
+  return res.json({ success: true });
+});`,
+        explanation: 'Sin rate limiting, los atacantes pueden realizar ataques de fuerza bruta ilimitados. Sin límites de tamaño de archivo, pueden causar denegación de servicio (DoS) consumiendo recursos del servidor.',
+      },
+      secure: {
+        code: `import rateLimit from 'express-rate-limit';
+import multer from 'multer';
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // 5 intentos
+  message: 'Demasiados intentos de login/registro, intenta más tarde',
+  skipSuccessfulRequests: true,
+});
+
+app.post(
+  '/api/login',
+  authLimiter,
+  validateLogin,
+  checkValidation,
+  async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      const result = await loginUser(username, password);
+      
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(401).json(result);
+      }
+    } catch (error: any) {
+      logger.error(\`Error en /api/login: \${error.message}\`);
+      res.status(500).json({ success: false, message: 'Error del servidor' });
+    }
+  }
+);
+
+export const upload = multer({
+  storage,
+  limits: {
+    fileSize: 1 * 1024 * 1024, // 1MB máximo
+  },
+  fileFilter: (req, file, cb) => {
+
+    const allowedTypes = /jpeg|jpg|png/;
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      logger.warn(\`Tipo de archivo rechazado: \${file.mimetype}, nombre: \${file.originalname}\`);
+      cb(new Error('Solo se permiten imágenes JPG o PNG'));
+    }
+  },
+});
+
+app.post(
+  '/api/profile/upload',
+  authenticateJWT,
+  upload.single('profileImage'),
+  async (req: AuthRequest, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'No se subió ningún archivo' });
+      }
+      
+      const processedPath = await processImage(req.file.path);
+      const filename = path.basename(processedPath);
+      
+      const user = await User.findById(req.user?.userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      }
+      
+      const imagePath = \`/uploads/\${filename}\`;
+      user.profileImage = imagePath;
+      await user.save();
+      
+      logger.info(\`Imagen de perfil actualizada para usuario: \${user.username}\`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Imagen subida correctamente',
+        profileImage: imagePath,
+      });
+    } catch (error: any) {
+      logger.error(\`Error en /api/profile/upload: \${error.message}\`);
+      res.status(500).json({ success: false, message: error.message || 'Error al subir imagen' });
+    }
+  }
+);`,
+        explanation: 'Implemento un rate limiting con 5 intentos máximos cada 15 minutos para prevenir fuerza bruta. Los uploads están limitados a 1MB y solo permiten formatos de imagen específicos.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/server.ts - Rate limiting, backend/utils.ts - File upload restrictions',
+    location: 'backend/server.ts - Limitación de velocidad (rate limiting), backend/utils.ts - Restricciones de subida de archivos',
     testEndpoint: '/api/register',
-    description: 'Rate limiting (5 auth attempts/15min), file size limits (1MB), MIME type validation, resource consumption controls.',
+    description: 'Limitación de velocidad (5 intentos de autenticación cada 15 minutos), límites de tamaño de archivo (1 MB), validación de tipo MIME, controles de consumo de recursos.',
   },
 };

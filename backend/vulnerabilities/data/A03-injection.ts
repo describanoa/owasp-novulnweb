@@ -53,12 +53,91 @@ export const A03_Injection: Vulnerability = {
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Prevención de Inyección NoSQL',
+      language: 'typescript',
+      vulnerable: {
+        code: `app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  // Inyección NoSQL posible: {"username": {"$ne": null}, "password": {"$ne": null}}
+  const user = await User.findOne({
+    username: username,
+    password: password
+  });
+  
+  if (user) {
+    return res.json({ success: true });
+  }
+});`,
+        explanation: 'Usar directamente la entrada del usuario sin validación permite inyección NoSQL. Un atacante puede enviar operadores como $ne, $gt, $regex para bypassear la autenticación.',
+      },
+      secure: {
+        code: `import { body, validationResult } from 'express-validator';
+
+const userSchema = new mongoose.Schema({
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    minlength: 3,
+    maxlength: 30,
+    match: /^[a-zA-Z0-9_-]+$/,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+    match: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/,
+  },
+  { ... }
+});
+
+export const validateLogin = [
+  body('username')
+    .trim()
+    .notEmpty()
+    .withMessage('Username es requerido'),
+  
+  body('password')
+    .notEmpty()
+    .withMessage('Password es requerido'),
+];
+
+app.post(
+  '/api/login',
+  authLimiter,
+  validateLogin,
+  checkValidation,
+  async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      const result = await loginUser(username, password);
+      
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(401).json(result);
+      }
+    } catch (error: any) {
+      logger.error(\`Error en /api/login: \${error.message}\`);
+      res.status(500).json({ success: false, message: 'Error del servidor' });
+    }
+  }
+);`,
+        explanation: 'Mongoose previene inyección NoSQL usando queries parametrizadas automáticamente, express-validator sanitiza y valida toda entrada del usuario. Los esquemas de Mongoose aplican validación a nivel de base de datos.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/db.ts - Mongoose schemas with validation, backend/server.ts - express-validator',
+    location: 'backend/db.ts - Esquemas de Mongoose con validación, backend/server.ts - express-validator',
     testEndpoint: '/api/register',
-    description: 'Mongoose prevents NoSQL injection with parameterized queries. express-validator validates all inputs.',
+    description: 'Mongoose previene inyección NoSQL usando queries parametrizadas automáticamente, express-validator valida todas las entradas.',
   },
 };

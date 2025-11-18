@@ -60,12 +60,83 @@ ResultSet results = pstmt.executeQuery();`,
     },
   ],
   
-  codeExamples: [],
+  codeExamples: [
+    {
+      title: 'Control de Acceso a Rutas Admin',
+      language: 'typescript',
+      vulnerable: {
+        code: `app.get('/api/admin/users', async (req, res) => {
+  const users = await User.find();
+  return res.json({ users });
+});`,
+        explanation: 'Cualquier usuario puede acceder a rutas administrativas sin verificación. No hay control de autenticación ni autorización basada en roles.',
+      },
+      secure: {
+        code: `const authenticateJWT = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    logger.warn(\`Intento de acceso sin token: \${req.path}\`);
+    return res.status(401).json({ success: false, message: 'No autorizado' });
+  }
+  const token = authHeader.substring(7);
+  const payload = verifyToken(token);
+  if (!payload) {
+    logger.warn(\`Token inválido en: \${req.path}\`);
+    return res.status(401).json({ success: false, message: 'Token inválido' });
+  }
+  req.user = payload;
+  next();
+};
+
+const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    logger.warn('Intento de acceso admin sin autenticación');
+    return res.status(401).json({ success: false, message: 'No autorizado' });
+  }
+  if (req.user.role !== 'admin') {
+    logger.warn(\`Usuario \${req.user.username} intentó acceder a ruta admin sin permisos\`);
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Acceso denegado: Se requiere rol de administrador' 
+    });
+  }
+  next();
+};
+
+app.get('/api/admin/users', authenticateJWT, requireAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const users = await User.find()
+      .select('-password') // No enviar passwords
+      .sort({ createdAt: -1 }); // Más recientes primero
+    
+    logger.info(\`Administrador (\${req.user?.username}) consultó lista de usuarios\`);
+    
+    return res.status(200).json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+      })),
+    });
+  } catch (error: any) {
+    logger.error(\`Error en GET /api/admin/users: \${error.message}\`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});`,
+        explanation: 'Implementación con dos capas de seguridad: 1) authenticateJWT verifica la identidad del usuario mediante JWT; 2) requireAdmin valida que el usuario tenga rol de administrador. Los logs registran intentos no autorizados para auditoría.',
+      },
+    },
+  ],
   
   implementationInApp: {
     hasExample: true,
-    location: 'backend/server.ts - authenticateJWT and requireAdmin middleware',
+    location: 'backend/server.ts - Middleware authenticateJWT y requireAdmin',
     testEndpoint: '/api/admin/users',
-    description: 'JWT-based authentication with role-based access control (RBAC). Admin routes protected with requireAdmin middleware.',
+    description: 'Autenticación basada en JWT con control de acceso basado en roles (RBAC). Rutas de administración protegidas con middleware requireAdmin.',
   },
 };
