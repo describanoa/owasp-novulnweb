@@ -2,7 +2,30 @@
  * MITIGACIÓN OWASP: Hero Component para página principal
  */
 
+import { useEffect, useState } from 'react';
+
 export default function Hero() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+
+  useEffect(() => {
+    // Verificar si hay token de sesión
+    const token = localStorage.getItem('token');
+    
+    const tokenValid = (token && token.length > 0) ? true : false;
+
+    setIsAuthenticated(tokenValid);
+  }, []);
+
+  const [clickedUrl, setClickedUrl] = useState('');
+
+  const handleProtectedClick = (url: string) => {
+    if (!isAuthenticated) {
+      setClickedUrl(url);
+      setShowAlert(true);
+    }
+  };
+
   return (
     <section className="bg-gradient-to-br from-blue-50 to-purple-50 py-20">
       <div className="container mx-auto px-4 text-center">
@@ -14,19 +37,70 @@ export default function Hero() {
           Login, registro y perfil con las mejores prácticas de seguridad.
         </p>
 
+        {/* Alerta de autenticación requerida */}
+        {showAlert && (
+          <div className="mb-6 max-w-2xl mx-auto animate-fade-down animate-duration-1000">
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 shadow-lg">
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-left">
+                  <p className="font-bold text-yellow-900 mb-1">
+                    ¡Autenticación requerida!
+                  </p>
+                  <p className="text-yellow-800 text-sm">
+                    Necesitas{' '}
+                    <a href={`/login?redirect=${encodeURIComponent(clickedUrl)}`} className="underline font-semibold hover:text-yellow-900">
+                      iniciar sesión
+                    </a>{' '}
+                    o{' '}
+                    <a href={`/register?redirect=${encodeURIComponent(clickedUrl)}`} className="underline font-semibold hover:text-yellow-900">
+                      registrarte
+                    </a>{' '}
+                    para acceder a este contenido.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAlert(false)}
+                  className="text-yellow-600 hover:text-yellow-900 text-2xl font-bold cursor-pointer"
+                >
+                  x
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-4 justify-center items-center flex-wrap">
-          <a 
-            href="/vulnerabilities"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg"
-          >
-            Vulnerabilidades
-          </a>
-          <button 
-            disabled
-            className="bg-gray-300 text-gray-600 px-8 py-3 rounded-lg text-lg font-semibold cursor-not-allowed shadow-lg border-2 border-gray-400"
-          >
-            Próximamente...
-          </button>
+          {isAuthenticated ? (
+            <>
+              <a 
+                href="/vulnerabilities"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+              >
+                Vulnerabilidades
+              </a>
+              <a 
+                href="/scripts"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+              >
+                Scripts de Prueba
+              </a>
+            </>
+          ) : (
+            <>
+              <button 
+                onClick={() => handleProtectedClick('/vulnerabilities')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+              >
+                Vulnerabilidades
+              </button>
+              <button 
+                onClick={() => handleProtectedClick('/scripts')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+              >
+                Scripts de Prueba
+              </button>
+            </>
+          )}
         </div>
         
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">

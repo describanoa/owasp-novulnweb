@@ -35,8 +35,12 @@ export default function LoginForm() {
       // Guardar token en localStorage
       localStorage.setItem('token', data.token);
 
-      // Redirigir a perfil
-      globalThis.location.href = '/profile';
+      // Leer parámetro redirect de la URL
+      const urlParams = new URLSearchParams(globalThis.location.search);
+      const redirectUrl = urlParams.get('redirect') || '/profile';
+
+      // Redirigir a la URL solicitada o al perfil por defecto
+      globalThis.location.href = redirectUrl;
     } catch (err) {
       setError('Error de conexión con el servidor');
       setLoading(false);
