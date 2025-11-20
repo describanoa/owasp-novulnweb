@@ -11,16 +11,15 @@ export default function Hero() {
   useEffect(() => {
     // Verificar si hay token de sesión
     const token = localStorage.getItem('token');
-    
     const tokenValid = (token && token.length > 0) ? true : false;
-
     setIsAuthenticated(tokenValid);
   }, []);
 
   const [clickedUrl, setClickedUrl] = useState('');
 
-  const handleProtectedClick = (url: string) => {
+  const handleProtectedClick = (e: React.MouseEvent, url: string) => {
     if (!isAuthenticated) {
+      e.preventDefault();
       setClickedUrl(url);
       setShowAlert(true);
     }
@@ -39,7 +38,7 @@ export default function Hero() {
 
         {/* Alerta de autenticación requerida */}
         {showAlert && (
-          <div className="mb-6 max-w-2xl mx-auto animate-fade-down animate-duration-1000">
+          <div className="mb-8 max-w-2xl mx-auto animate-fade-down animate-duration-1000">
             <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 shadow-lg">
               <div className="flex items-center justify-center gap-3">
                 <div className="text-left">
@@ -70,37 +69,20 @@ export default function Hero() {
         )}
 
         <div className="flex gap-4 justify-center items-center flex-wrap">
-          {isAuthenticated ? (
-            <>
-              <a 
-                href="/vulnerabilities"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
-              >
-                Vulnerabilidades
-              </a>
-              <a 
-                href="/scripts"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
-              >
-                Scripts de Prueba
-              </a>
-            </>
-          ) : (
-            <>
-              <button 
-                onClick={() => handleProtectedClick('/vulnerabilities')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
-              >
-                Vulnerabilidades
-              </button>
-              <button 
-                onClick={() => handleProtectedClick('/scripts')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
-              >
-                Scripts de Prueba
-              </button>
-            </>
-          )}
+            <a
+              href="/vulnerabilities"
+              onClick={(e) => handleProtectedClick(e, '/vulnerabilities')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+            >
+              Vulnerabilidades
+            </a>
+            <a 
+              href="/scripts"
+              onClick={(e) => handleProtectedClick(e, '/scripts')}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg text-lg font-semibold cursor-pointer shadow-lg transition-colors"
+            >
+              Scripts de Prueba
+            </a>
         </div>
         
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">

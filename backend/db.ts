@@ -94,7 +94,4 @@ userSchema.set('toJSON', {
   },
 });
 
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-
 export const User = mongoose.model('User', userSchema);
