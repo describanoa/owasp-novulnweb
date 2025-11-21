@@ -235,6 +235,19 @@ export default function ProfileForm() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-6 flex justify-center">
+        {user.profileImage ? (
+          <img
+            src={`${API_URL}${user.profileImage}`}
+            alt="Perfil"
+            className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
+          />
+        ) : (
+          <div className="w-32 h-32 rounded-full bg-white border-4 border-blue-500 flex items-center justify-center">
+            <span className="text-5xl text-gray-400">👤</span>
+          </div>
+        )}
+      </div>
       {/* Información del usuario */}
       <div className="bg-gray-50 p-6 rounded-lg">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -270,25 +283,11 @@ export default function ProfileForm() {
         </div>
       </div>
 
-      {/* Imagen de perfil */}
+      {/* Actalizar foto de perfil */}
       <div className="bg-gray-50 p-6 rounded-lg">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">
-          Foto de perfil
+          Actualizar foto de perfil
         </h2>
-
-        <div className="mb-4 flex justify-center">
-          {user.profileImage ? (
-            <img
-              src={`${API_URL}${user.profileImage}`}
-              alt="Perfil"
-              className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
-            />
-          ) : (
-            <div className="w-32 h-32 rounded-full bg-white border-4 border-blue-500 flex items-center justify-center">
-              <span className="text-5xl text-gray-400">👤</span>
-            </div>
-          )}
-        </div>
 
         <form onSubmit={handleImageUpload} className="space-y-4">
           {error && (
@@ -318,7 +317,7 @@ export default function ProfileForm() {
                 name="profileImage"
                 accept="image/jpeg,image/jpg,image/png"
                 onChange={handleFileChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 disabled={uploading}
               />
               
@@ -342,7 +341,7 @@ export default function ProfileForm() {
           <button
             type="submit"
             disabled={uploading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 cursor-pointer"
           >
             {uploading ? 'Subiendo...' : 'Subir imagen'}
           </button>
@@ -355,7 +354,7 @@ export default function ProfileForm() {
               type="button"
               onClick={handleDeleteImage}
               disabled={uploading}
-              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-400"
+              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-400 cursor-pointer"
             >
               {uploading ? 'Eliminando...' : '🗑️ Eliminar foto de perfil'}
             </button>
