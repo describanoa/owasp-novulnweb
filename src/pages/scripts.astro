@@ -12,6 +12,29 @@ import 'prismjs/components/prism-json';
 
 export const prerender = false;
 
+// Verificar autenticación del lado del servidor
+const token = Astro.cookies.get('token')?.value;
+
+if (!token) {
+  return Astro.redirect('/login?redirect=/scripts');
+}
+
+// Validar token con el backend
+const API_URL = 'http://localhost:3001';
+try {
+  const authResponse = await fetch(`${API_URL}/api/profile`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!authResponse.ok) {
+    return Astro.redirect('/login?redirect=/scripts');
+  }
+} catch (error) {
+  return Astro.redirect('/login?redirect=/scripts');
+}
+
 const tests = [
   {
     id: 'A01',

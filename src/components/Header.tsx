@@ -63,6 +63,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    document.cookie = 'token=; path=/; max-age=0';
     setIsAuthenticated(false);
     globalThis.location.href = '/';
   };

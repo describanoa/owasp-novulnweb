@@ -16,8 +16,30 @@ export const prerender = false;
 
 const { id } = Astro.params;
 
-// Fetch de la vulnerabilidad específica
+// Verificar autenticación del lado del servidor
+const token = Astro.cookies.get('token')?.value;
+
+if (!token) {
+  return Astro.redirect(`/login?redirect=/vulnerabilities/${id}`);
+}
+
+// Validar token con el backend
 const API_URL = 'http://localhost:3001';
+try {
+  const authResponse = await fetch(`${API_URL}/api/profile`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!authResponse.ok) {
+    return Astro.redirect(`/login?redirect=/vulnerabilities/${id}`);
+  }
+} catch (error) {
+  return Astro.redirect(`/login?redirect=/vulnerabilities/${id}`);
+}
+
+// Fetch de la vulnerabilidad específica
 const response = await fetch(`${API_URL}/api/vulnerabilities/${id}`);
 const { success, data: vuln } = await response.json();
 

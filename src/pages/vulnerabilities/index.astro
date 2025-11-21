@@ -6,9 +6,32 @@
 import Layout from '../../layouts/Layout.astro';
 import { Image } from 'astro:assets';
 
-// Fetch de las vulnerabilidades desde nuestra API
+export const prerender = false;
 
+// Verificar autenticación del lado del servidor
+const token = Astro.cookies.get('token')?.value;
+
+if (!token) {
+  return Astro.redirect('/login?redirect=/vulnerabilities');
+}
+
+// Validar token con el backend
 const API_URL = 'http://localhost:3001';
+try {
+  const authResponse = await fetch(`${API_URL}/api/profile`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!authResponse.ok) {
+    return Astro.redirect('/login?redirect=/vulnerabilities');
+  }
+} catch (error) {
+  return Astro.redirect('/login?redirect=/vulnerabilities');
+}
+
+// Fetch de las vulnerabilidades desde nuestra API
 const response = await fetch(`${API_URL}/api/vulnerabilities`);
 const { success, data: vulnerabilities } = await response.json();
 

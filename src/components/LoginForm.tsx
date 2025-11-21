@@ -35,6 +35,9 @@ export default function LoginForm() {
       // Guardar token en localStorage
       localStorage.setItem('token', data.token);
 
+      // También guardar token en cookies para server-side rendering
+      document.cookie = `token=${data.token}; path=/; max-age=${24 * 60 * 60}`; // 24h
+
       // Leer parámetro redirect de la URL
       const urlParams = new URLSearchParams(globalThis.location.search);
       const redirectUrl = urlParams.get('redirect') || '/profile';
