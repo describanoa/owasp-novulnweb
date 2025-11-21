@@ -189,7 +189,7 @@ app.get('/api/admin/logs', authenticateJWT, requireAdmin, async (req: AuthReques
   implementationInApp: {
     hasExample: true,
     location: 'backend/utils.ts - Logger con Winston, backend/server.ts - Middleware de registro de solicitudes',
-    testEndpoint: '/api/login',
+    testEndpoint: '',
     description: 'Logger Winston con formato JSON. Todas las solicitudes se registran con la IP. Se registran los intentos de inicio de sesión fallidos, fallos de control de acceso y errores. El administrador puede ver los registros.',
   },
 };

@@ -4,11 +4,415 @@
  * Muestra ejemplos de scripts para probar las mitigaciones implementadas
  */
 import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-okaidia.css';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
 
+export const prerender = false;
+
+const tests = [
+  {
+    id: 'A01',
+    title: 'A01 - Broken Access Control',
+    icon: '/A01.webp',
+    color: 'blue',
+    tests: [
+      {
+        name: 'Acceso sin autenticación',
+        description: 'Intento de acceso a un recurso protegido sin token JWT',
+        command: 'curl -X GET http://localhost:3001/api/profile',
+        expectedResponse: '{"success":false,"message":"No autorizado"}',
+        expectedStatus: 'HTTP 401 Unauthorized',
+      }
+    ]
+  },
+  {
+    id: 'A02',
+    title: 'A02 - Cryptographic Failures',
+    icon: '/A02.webp',
+    color: 'purple',
+    tests: [
+      {
+        name: 'Registro con password seguro',
+        description: 'Verificar que las contraseñas se hashean con bcrypt',
+        command: `curl -X POST http://localhost:3001/api/register \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "username": "testuser123",
+    "email": "test@test.com",
+    "password": "TestPassword123"
+  }'`,
+        expectedResponse: `{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "...",
+    "username": "testuser123",
+    "email": "test@test.com"
+  }
+}`,
+        expectedStatus: 'HTTP 201 Created',
+        note: 'Password en MongoDB: $2b$12$.iub54E4K5jEMgtznrqFhejFZVInyeju.Ucng.LoRJjATQvk9OH7u (bcrypt con 12 rondas)',
+      }
+    ]
+  },
+  {
+    id: 'A03',
+    title: 'A03 - Injection',
+    icon: '/A03.webp',
+    color: 'green',
+    tests: [
+      {
+        name: 'NoSQL Injection en login',
+        description: 'Intento de bypass con operadores NoSQL',
+        command: `curl -X POST http://localhost:3001/api/login \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "username": {"$ne": null},
+    "password": {"$ne": null}
+  }'`,
+        expectedResponse: '{"success":false,"message":"Credenciales inválidas"}',
+        expectedStatus: 'HTTP 401 Unauthorized',
+      },
+      {
+        name: 'XSS en username',
+        description: 'Intento de inyectar código JavaScript en el username',
+        command: `curl -X POST http://localhost:3001/api/register \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "username": "<script> alert(\\"XSS\\")</script>",
+    "email": "hack@test.com",
+    "password": "Password123"
+  }'`,
+        expectedResponse: `{
+  "success":false,
+  "message":"Errores de validación",
+  "errors":[
+    {
+      "type":"field",
+      "value":"<script>alert(\\"XSS\\")</script>",
+      "msg":"Username solo puede contener letras, números, guiones y guiones bajos",
+      "path":"username",
+      "location":"body"
+    }
+  ]
+}`,
+        expectedStatus: 'HTTP 400 Bad Request',
+      }
+    ]
+  },
+  {
+    id: 'A04',
+    title: 'A04 - Insecure Design',
+    icon: '/A04.webp',
+    color: 'orange',
+    tests: [
+      {
+        name: 'Verificar diseño de autorización (IDOR)',
+        description: 'Intentar acceder a recursos protegidos sin autenticación',
+        command: `curl -X GET http://localhost:3001/api/profile`,
+        expectedResponse: '{"success":false,"message":"No autorizado"}',
+        expectedStatus: 'HTTP 401 Unauthorized',
+        note: 'El diseño seguro requiere JWT para acceder a recursos protegidos',
+      }
+    ]
+  },
+  {
+    id: 'A05',
+    title: 'A05 - Security Misconfiguration',
+    icon: '/A05.webp',
+    color: 'yellow',
+    tests: [
+      {
+        name: 'Verificar headers de seguridad (Helmet)',
+        description: 'Comprobar que los headers de seguridad están configurados',
+        command: 'curl -I http://localhost:3001/api/health',
+        expectedResponse: `lf';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: cross-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Access-Control-Allow-Origin: http://localhost:4321
+Vary: Origin
+Access-Control-Allow-Credentials: true
+RateLimit-Policy: 100;w=900
+RateLimit-Limit: 100
+RateLimit-Remaining: 88
+RateLimit-Reset: 667
+Content-Type: application/json; charset=utf-8
+Content-Length: 85
+ETag: W/"55-JKcAPoc4SMj8dgrGp63TBYfhBIw"
+Date: Thu, 20 Nov 2025 21:29:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5`,
+        expectedStatus: 'HTTP 200 OK',
+        note: 'Verificar que NO existe: X-Powered-By (debe estar oculto)',
+      }
+    ]
+  },
+  {
+    id: 'A06',
+    title: 'A06 - Vulnerable Components',
+    icon: '/A06.webp',
+    color: 'cyan',
+    tests: [
+      {
+        name: 'Verificar versiones de dependencias',
+        description: 'Comprobar que todas las dependencias están actualizadas',
+        command: 'cat package.json | grep -A 20 \'"dependencies"\'',
+        expectedResponse: `"dependencies": {
+    "@astrojs/react": "4.4.2",
+    "@react-three/drei": "10.7.7",
+    "@react-three/fiber": "9.4.0",
+    "@tailwindcss/vite": "4.1.17",
+    "@types/three": "0.181.0",
+    "astro": "5.15.9",
+    "bcryptjs": "3.0.3",
+    "cookie-parser": "1.4.7",
+    "cors": "2.8.5",
+    "dotenv": "17.2.3",
+    "express": "5.1.0",
+    "express-rate-limit": "8.2.1",
+    "express-validator": "7.3.0",
+    "helmet": "8.1.0",
+    "jsonwebtoken": "9.0.2",
+    "maath": "0.10.8",
+    "mongodb": "7.0.0",
+    "mongoose": "8.20.0",
+    "multer": "2.0.2",
+    "prismjs": "1.30.0",
+    ... 
+}`,
+        expectedStatus: 'Dependencias actualizadas (2024-2025)',
+      }
+    ]
+  },
+  {
+    id: 'A07',
+    title: 'A07 - Identification Failures',
+    icon: '/A07.webp',
+    color: 'red',
+    tests: [
+      {
+        name: 'Rate limiting en login (5 intentos máximo)',
+        description: 'Verificar que el rate limiting bloquea después de 5 intentos',
+        command: `for i in {1..6}; do
+  echo "Intento $i:"
+  curl -X POST http://localhost:3001/api/login \\
+    -H "Content-Type: application/json" \\
+    -d '{"username":"fake","password":"fake"}'
+  echo ""
+done`,
+        expectedResponse: `Intento 1:
+{"success":false,"message":"Credenciales inválidas"}
+Intento 2:
+{"success":false,"message":"Credenciales inválidas"}
+Intento 3:
+{"success":false,"message":"Credenciales inválidas"}
+Intento 4:
+{"success":false,"message":"Credenciales inválidas"}
+Intento 5:
+{"success":false,"message":"Credenciales inválidas"}
+Intento 6:
+Demasiados intentos de login/registro, intenta más tarde`,
+        expectedStatus: 'HTTP 429 Too Many Requests (intento 6)',
+      }
+    ]
+  },
+  {
+    id: 'A08',
+    title: 'A08 - Integrity Failures',
+    icon: '/A08.webp',
+    color: 'indigo',
+    tests: [
+      {
+        name: 'Subir archivo no permitido (.txt)',
+        description: 'Intentar subir un archivo que no sea imagen',
+        command: `TOKEN="<tu_token_sesion_jwt_aqui>"
+
+echo "Archivo malicioso" > /tmp/malicious.txt
+
+curl -X POST http://localhost:3001/api/profile/upload \\
+  -H "Authorization: Bearer $TOKEN" \\
+  -F "profileImage=@/tmp/malicious.txt"`,
+        expectedResponse: '{"success":false,"message":"Solo se permiten imágenes JPG o PNG"}',
+        expectedStatus: 'HTTP 400 Bad Request',
+      }
+    ]
+  },
+  {
+    id: 'A09',
+    title: 'A09 - Security Logging and Monitoring Failures',
+    icon: '/A09.webp',
+    color: 'pink',
+    tests: [
+      {
+        name: 'Verificar logs de seguridad (Winston)',
+        description: 'Comprobar que los eventos de seguridad se registran correctamente',
+        command: 'tail -n 10 logs/combined.log',
+        expectedResponse: `{"level":"info","message":"Imagen de perfil eliminada para usuario: userPrueba","timestamp":"2025-11-21T08:01:59.269Z"}
+{"level":"info","message":"GET /api/profile - IP: ::1","timestamp":"2025-11-21T08:01:59.278Z"}
+{"level":"info","message":"POST /api/profile/upload - IP: ::1","timestamp":"2025-11-21T08:03:06.718Z"}
+{"level":"info","message":"Imagen procesada: /Users/describanoa/owasp-novulnweb/uploads/profile-20d14955-0d5b-4c97-807c-eb7af07c6c76.jpg","timestamp":"2025-11-21T08:03:06.741Z"}
+{"level":"info","message":"Imagen de perfil actualizada para usuario: userPrueba","timestamp":"2025-11-21T08:03:06.814Z"}
+{"level":"info","message":"GET /api/profile - IP: ::1","timestamp":"2025-11-21T08:03:06.822Z"}
+{"level":"info","message":"GET /uploads/profile-20d14955-0d5b-4c97-807c-eb7af07c6c76.jpg - IP: ::1","timestamp":"2025-11-21T08:03:06.864Z"}
+{"level":"info","message":"POST /api/login - IP: ::1","timestamp":"2025-11-21T08:04:00.342Z"}
+{"level":"warn","message":"Intento de login fallido - password incorrecto: userPrueba","timestamp":"2025-11-21T08:04:00.622Z"}
+{"level":"error","message":"Error en loginUser: Credenciales inválidas","timestamp":"2025-11-21T08:04:00.622Z"}`,
+        expectedStatus: 'Logs estructurados en JSON con timestamps',
+      }
+    ]
+  }
+];
+
+const colorClasses: Record<string, string> = {
+  blue: 'from-blue-300 to-blue-700 border-blue-500',
+  purple: 'from-purple-300 to-purple-700 border-purple-500',
+  green: 'from-green-300 to-green-700 border-green-500',
+  orange: 'from-orange-300 to-orange-700 border-orange-500',
+  yellow: 'from-yellow-300 to-yellow-700 border-yellow-500',
+  cyan: 'from-cyan-300 to-cyan-700 border-cyan-500',
+  red: 'from-red-300 to-red-700 border-red-500',
+  indigo: 'from-indigo-300 to-indigo-700 border-indigo-500',
+  pink: 'from-pink-300 to-pink-700 border-pink-500',
+};
+
+const highlightCode = (code: string, language: string) => {
+  const grammar = Prism.languages[language];
+  if (!grammar) return code;
+  return Prism.highlight(code, grammar, language);
+};
 ---
 
 <Layout title="Scripts de Prueba - OWASP">
-    <div>
-        Scripts de prueba para evaluar las mitigaciones de seguridad implementadas en la aplicación.
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b sticky top-0 z-10 shadow-sm">
+      <div class="container mx-auto px-4 py-4">
+        <nav class="flex items-center gap-2 text-sm">
+          <a href="/" class="text-gray-600 hover:text-gray-900">Inicio</a>
+          <span class="text-gray-400">/</span>
+          <span class="text-gray-900 font-medium">Scripts de Prueba</span>
+        </nav>
+      </div>
     </div>
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white h-[245px]">
+      <div class="container mx-auto px-4 h-full flex items-center">
+        <div class="flex items-center gap-6">
+          <div>
+            <h1 class="text-4xl font-bold mb-2">Scripts de Prueba OWASP</h1>
+            <p class="text-lg">
+              Comandos curl para validar las mitigaciones de seguridad implementadas
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <div class="max-w-6xl mx-auto space-y-8">
+        <!-- Introducción -->
+        <section class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-6 border-2 border-blue-200">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
+            Instrucciones de Uso
+          </h2>
+          <div class="space-y-3 text-gray-700">
+            <p>
+              <strong>Requisitos:</strong> Servidor backend corriendo en <code class="bg-blue-100 px-2 py-1 rounded">http://localhost:3001</code>
+            </p>
+            <p>
+              <strong>Herramienta:</strong> Utiliza <code class="bg-blue-100 px-2 py-1 rounded">curl</code> desde tu terminal para ejecutar las pruebas
+            </p>
+            <p>
+              <strong>Objetivo:</strong> Verificar que cada vulnerabilidad OWASP Top 10 está correctamente mitigada
+            </p>
+          </div>
+        </section>
+
+        <!-- Tests por vulnerabilidad -->
+        {tests.map((category) => (
+          <section class="bg-white rounded-xl shadow-lg overflow-hidden border-2 border-gray-200">
+            <div class={`bg-gradient-to-r ${colorClasses[category.color]} px-6 py-4`}>
+              <h2 class="text-white text-2xl font-bold flex items-center gap-3">
+                <Image 
+                  src={category.icon} 
+                  alt={category.title}
+                  width="48"
+                  height="48"
+                  loading="lazy"
+                  class="w-12 h-12 object-contain"
+                />
+                {category.title}
+              </h2>
+            </div>
+            
+            <div class="p-6 space-y-8">
+              {category.tests.map((test, index) => (
+                <div class="space-y-4">
+                  <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">{test.name}</h3>
+                    <p class="text-gray-600">{test.description}</p>
+                  </div>
+
+                  <!-- Comando -->
+                  <div class="bg-gray-900 rounded-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-gray-800 to-gray-700 px-4 py-2 flex items-center gap-2">
+                      <div class="flex gap-1.5">
+                        <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-amber-400"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                      <span class="ml-2 text-white text-sm font-medium">Comando de prueba</span>
+                    </div>
+                    <pre class="p-4 overflow-x-auto text-sm"><code class="language-bash" set:html={highlightCode(test.command, 'bash')} /></pre>
+                  </div>
+
+                  <!-- Respuesta esperada -->
+                  <div>
+                    <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                      <p class="text-green-900 font-semibold mb-2">Respuesta esperada:</p>
+                      <div class="bg-white rounded border border-green-200 p-3">
+                        <pre class="text-sm text-gray-800 overflow-x-auto"><code>{test.expectedResponse}</code></pre>
+                      </div>
+                      <p class="text-green-800 text-sm mt-2 font-medium">{test.expectedStatus}</p>
+                      {'note' in test && test.note && (
+                        <p class="text-green-700 text-sm mt-2 italic">💡 {test.note}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {index < category.tests.length - 1 && (
+                    <div class="border-t border-gray-200 my-6"></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <div class="flex justify-between items-center pt-8">
+          <a 
+            href="/"
+            class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Volver al inicio
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>

@@ -175,6 +175,6 @@ app.post(
     hasExample: true,
     location: 'backend/server.ts - Limitación de velocidad (rate limiting), backend/utils.ts - Restricciones de subida de archivos',
     testEndpoint: '/api/register',
-    description: 'Limitación de velocidad (5 intentos de autenticación cada 15 minutos), límites de tamaño de archivo (1 MB), validación de tipo MIME, controles de consumo de recursos.',
+    description: 'Limitación de velocidad (5 intentos de autenticación cada 15 minutos), límites de tamaño de archivo (1 MB), validación de tipo MIME y controles de consumo de recursos.',
   },
 };
