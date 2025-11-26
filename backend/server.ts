@@ -306,6 +306,35 @@ app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 /**
+ * POST /api/security-log
+ * OWASP A09 - Security Logging: Registrar eventos de seguridad del cliente
+ * Permite al frontend reportar eventos
+ */
+app.post('/api/security-log', (req: Request, res: Response) => {
+  try {
+    const { event, details, userAgent } = req.body;
+    
+    // Validar que el evento existe
+    if (!event) {
+      return res.status(400).json({ success: false, message: 'Evento requerido' });
+    }
+    
+    // Loggear el evento de seguridad del cliente
+    logger.warn(`[PROBLEMA TOKEN JWT] ${event}`, {
+      details: details || {},
+      userAgent: userAgent || req.headers['user-agent'],
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    
+    return res.status(200).json({ success: true });
+  } catch (error: any) {
+    logger.error(`Error en /api/security-log: ${error.message}`);
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
+  }
+});
+
+/**
  * Health check
  */
 app.get('/api/health', (req: Request, res: Response) => {

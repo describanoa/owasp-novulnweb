@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react';
 
 const API_URL = 'http://localhost:3001';
 
+/**
+ * OWASP A09 - Security Logging: Enviar eventos de seguridad al backend
+ * Los eventos del cliente se registran en el servidor para auditoría
+ */
+const logSecurityEvent = async (event: string, details?: Record<string, any>) => {
+  try {
+    await fetch(`${API_URL}/api/security-log`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event,
+        details,
+        userAgent: navigator.userAgent,
+      }),
+    });
+  } catch (error) {
+    console.warn('No se pudo enviar evento de seguridad:', event);
+  }
+};
+
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
@@ -17,7 +37,36 @@ export default function Header() {
     };
 
     globalThis.addEventListener('storage', handleStorageChange);
-    return () => globalThis.removeEventListener('storage', handleStorageChange);
+
+    // Intervalo para verificar la sesión (localStorage | cookies)
+    const intervalId = setInterval(() => {
+      const localToken = localStorage.getItem('token');
+      const cookieToken = document.cookie
+        .split('; ')
+        .some((item) => item.trim().startsWith('token='));
+
+        // OWASP A09 - Loggear evento de seguridad en el backend
+        if (localToken && !cookieToken) {
+          // Si el token está en localStorage pero no en cookies, cerrar la sesión
+          logSecurityEvent('TOKEN_COOKIE_ELIMINADO', { reason: 'Falta la cookie de sesión, cerrando sesión' });
+          localStorage.removeItem('token');
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          globalThis.location.href = '/';
+        } else if (!localToken && cookieToken) {
+          // Si el token está en cookies pero no en localStorage, cerrar la sesión
+          logSecurityEvent('TOKEN_LOCALSTORAGE_ELIMINADO', { reason: 'Falta el token local de sesión, cerrando sesión' });
+          document.cookie = 'token=; path=/; max-age=0';
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          globalThis.location.href = '/';
+        }
+      }, 2500);
+
+    return () => {
+      globalThis.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId)
+    }
   }, []);
 
   /**
