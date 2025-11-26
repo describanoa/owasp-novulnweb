@@ -124,37 +124,37 @@ export default function Header() {
           <span className="text-white">SecureApp</span>
         </a>
         
-        <div className="flex items-center gap-x-10">
+        <div className="flex items-center gap-x-4 md:gap-x-10 flex-wrap justify-end">
           {/* Mostrar loading mientras valida el token */}
           {isValidating ? (
-            <span className="uppercase font-mono text-foreground/60">Cargando...</span>
+            <span className="uppercase font-mono text-foreground/60 text-sm md:text-base">Cargando...</span>
           ) : isAuthenticated ? (
             <>
-              <nav className="flex max-lg:hidden items-center justify-center gap-x-10">
-                <a href="/profile" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out">
+              <nav className="flex items-center justify-center gap-x-4 md:gap-x-10">
+                <a href="/profile" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out text-xs md:text-sm">
                   Mi Perfil
                 </a>
                 {isAdmin && (
-                  <a href="/admin" className="uppercase inline-block font-mono text-purple-400 hover:text-purple-300 duration-150 transition-colors ease-out">
+                  <a href="/admin" className="uppercase inline-block font-mono text-purple-400 hover:text-purple-300 duration-150 transition-colors ease-out text-xs md:text-sm">
                     Admin
                   </a>
                 )}
               </nav>
               <button
                 onClick={handleLogout}
-                className="uppercase transition-colors ease-out duration-150 font-mono text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none"
+                className="uppercase transition-colors ease-out duration-150 font-mono text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none text-xs md:text-sm"
               >
-                Cerrar Sesión
+                Cerrar Sesión
               </button>
             </>
           ) : (
-            <nav className="flex items-center gap-x-10">
-              <a href="/login" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out">
-                Iniciar Sesión
+            <nav className="flex items-center gap-x-4 md:gap-x-10">
+              <a href="/login" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out text-xs md:text-sm">
+                Iniciar Sesión
               </a>
               <a
                 href="/register"
-                className="uppercase transition-colors ease-out duration-150 font-mono text-primary hover:text-primary/80"
+                className="uppercase transition-colors ease-out duration-150 font-mono text-primary hover:text-primary/80 text-xs md:text-sm"
               >
                 Registrarse
               </a>
