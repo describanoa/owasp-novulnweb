@@ -220,7 +220,7 @@ export default function ProfileForm() {
   if (loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-600">Cargando perfil...</p>
+        <p className="text-gray-400">Cargando perfil...</p>
       </div>
     );
   }
@@ -228,7 +228,7 @@ export default function ProfileForm() {
   if (!user) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">Error al cargar el perfil</p>
+        <p className="text-red-400">Error al cargar el perfil</p>
       </div>
     );
   }
@@ -243,36 +243,36 @@ export default function ProfileForm() {
             className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
           />
         ) : (
-          <div className="w-32 h-32 rounded-full bg-white border-4 border-blue-500 flex items-center justify-center">
+          <div className="w-32 h-32 rounded-full bg-white/10 border-4 border-blue-500 flex items-center justify-center">
             <span className="text-5xl text-gray-400">👤</span>
           </div>
         )}
       </div>
       {/* Información del usuario */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-white/5 p-6 rounded-lg border border-white/10">
+        <h2 className="text-xl font-semibold text-white mb-4">
           Información de la cuenta
         </h2>
         
         <div className="space-y-4">
-          <div className="border-b pb-3">
-            <label className="text-sm font-medium text-gray-600">Usuario</label>
-            <p className="text-lg text-gray-800 font-semibold">{user.username}</p>
+          <div className="border-b border-gray-700 pb-3">
+            <label className="text-sm font-medium text-gray-400">Usuario</label>
+            <p className="text-lg text-white font-semibold">{user.username}</p>
           </div>
           
-          <div className="border-b pb-3">
-            <label className="text-sm font-medium text-gray-600">Email</label>
-            <p className="text-lg text-gray-800 font-semibold">{user.email}</p>
+          <div className="border-b border-gray-700 pb-3">
+            <label className="text-sm font-medium text-gray-400">Email</label>
+            <p className="text-lg text-white font-semibold">{user.email}</p>
           </div>
           
-          <div className="border-b pb-3">
-            <label className="text-sm font-medium text-gray-600">Rol</label>
-            <p className="text-lg text-gray-800 font-semibold capitalize">{user.role}</p>
+          <div className="border-b border-gray-700 pb-3">
+            <label className="text-sm font-medium text-gray-400">Rol</label>
+            <p className="text-lg text-white font-semibold capitalize">{user.role}</p>
           </div>
           
           <div className="pb-3">
-            <label className="text-sm font-medium text-gray-600">Miembro desde</label>
-            <p className="text-lg text-gray-800 font-semibold">
+            <label className="text-sm font-medium text-gray-400">Miembro desde</label>
+            <p className="text-lg text-white font-semibold">
               {new Date(user.createdAt).toLocaleDateString('es-ES', {
                 year: 'numeric',
                 month: 'long',
@@ -284,20 +284,20 @@ export default function ProfileForm() {
       </div>
 
       {/* Actalizar foto de perfil */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+      <div className="bg-white/5 p-6 rounded-lg border border-white/10">
+        <h2 className="text-xl font-semibold text-white mb-4">
           Actualizar foto de perfil
         </h2>
 
         <form onSubmit={handleImageUpload} className="space-y-4">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            <div className="bg-green-900/50 border border-green-500 text-green-200 px-4 py-3 rounded">
               {success}
             </div>
           )}
@@ -305,7 +305,7 @@ export default function ProfileForm() {
           <div>
             <label
               htmlFor="profileImage"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-300 mb-2"
             >
               Seleccionar imagen
             </label>
@@ -317,7 +317,7 @@ export default function ProfileForm() {
                 name="profileImage"
                 accept="image/jpeg,image/jpg,image/png"
                 onChange={handleFileChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="flex-1 px-3 py-2 bg-white/5 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                 disabled={uploading}
               />
               
@@ -327,13 +327,13 @@ export default function ProfileForm() {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-16 h-16 rounded-lg object-cover border-2 border-gray-300"
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-gray-600"
                   />
                 </div>
               )}
             </div>
             
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               JPG o PNG, máximo 1MB
             </p>
           </div>
@@ -341,7 +341,7 @@ export default function ProfileForm() {
           <button
             type="submit"
             disabled={uploading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 cursor-pointer"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-600 cursor-pointer"
           >
             {uploading ? 'Subiendo...' : 'Subir imagen'}
           </button>
@@ -349,12 +349,12 @@ export default function ProfileForm() {
 
         {/* Botón para eliminar imagen (solo si existe) */}
         {user.profileImage && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-gray-700">
             <button
               type="button"
               onClick={handleDeleteImage}
               disabled={uploading}
-              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-400 cursor-pointer"
+              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-600 cursor-pointer"
             >
               {uploading ? 'Eliminando...' : '🗑️ Eliminar foto de perfil'}
             </button>

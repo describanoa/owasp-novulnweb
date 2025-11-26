@@ -117,19 +117,19 @@ export default function AdminPanel() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Verificando permisos...</p>
+      <div className="container mx-auto px-4 py-8 text-center min-h-screen flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+        <p className="mt-4 text-gray-300">Verificando permisos...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-          <p className="font-bold">❌ {error}</p>
-          <a href="/" className="text-blue-600 hover:underline mt-2 inline-block">
+      <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
+        <div className="bg-red-900/20 border border-red-500/50 text-red-200 px-6 py-4 rounded-xl text-center backdrop-blur-md">
+          <p className="font-bold text-lg mb-2">❌ {error}</p>
+          <a href="/" className="text-white hover:text-red-200 underline transition-colors inline-block">
             Volver al inicio
           </a>
         </div>
@@ -138,39 +138,45 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-gray-900 mb-8">
-        Panel de Administración
-      </h1>
+    <div className="container mx-auto px-4 py-12 min-h-screen">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-4xl font-bold text-white">
+          Panel de Administración
+        </h1>
+        <div className="text-sm text-gray-400">
+          <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+          Sistema Operativo
+        </div>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 mb-8 border-b">
+      <div className="flex gap-2 mb-8 p-1 bg-white/5 backdrop-blur-md rounded-lg border border-white/10 w-fit">
         <button
           onClick={() => setActiveTab('stats')}
-          className={`px-6 py-3 font-semibold transition cursor-pointer ${
+          className={`px-6 py-2 rounded-md font-medium transition-all duration-200 cursor-pointer ${
             activeTab === 'stats'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-blue-600'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
           📊 Estadísticas
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-6 py-3 font-semibold transition cursor-pointer ${
+          className={`px-6 py-2 rounded-md font-medium transition-all duration-200 cursor-pointer ${
             activeTab === 'users'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-blue-600'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
           👥 Usuarios ({users.length})
         </button>
         <button
           onClick={() => setActiveTab('logs')}
-          className={`px-6 py-3 font-semibold transition cursor-pointer ${
+          className={`px-6 py-2 rounded-md font-medium transition-all duration-200 cursor-pointer ${
             activeTab === 'logs'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-600 hover:text-blue-600'
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
           }`}
         >
           📋 Logs ({logs.length})
@@ -180,78 +186,78 @@ export default function AdminPanel() {
       {/* Contenido según tab activa */}
       {activeTab === 'stats' && stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-600">
-            <p className="text-gray-600 text-sm font-medium">Total Usuarios</p>
-            <p className="text-4xl font-bold text-blue-600 mt-2">{stats.totalUsers}</p>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-blue-500/50 transition-colors group">
+            <p className="text-gray-400 text-sm font-medium group-hover:text-blue-300 transition-colors">Total Usuarios</p>
+            <p className="text-4xl font-bold text-white mt-2">{stats.totalUsers}</p>
           </div>
           
-          <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-600">
-            <p className="text-gray-600 text-sm font-medium">Administradores</p>
-            <p className="text-4xl font-bold text-purple-600 mt-2">{stats.totalAdmins}</p>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-purple-500/50 transition-colors group">
+            <p className="text-gray-400 text-sm font-medium group-hover:text-purple-300 transition-colors">Administradores</p>
+            <p className="text-4xl font-bold text-white mt-2">{stats.totalAdmins}</p>
           </div>
           
-          <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-600">
-            <p className="text-gray-600 text-sm font-medium">Con Imagen</p>
-            <p className="text-4xl font-bold text-green-600 mt-2">{stats.usersWithImage}</p>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-green-500/50 transition-colors group">
+            <p className="text-gray-400 text-sm font-medium group-hover:text-green-300 transition-colors">Con Imagen</p>
+            <p className="text-4xl font-bold text-white mt-2">{stats.usersWithImage}</p>
           </div>
           
-          <div className="bg-red-50 p-6 rounded-lg border-l-4 border-red-600">
-            <p className="text-gray-600 text-sm font-medium">Errores Recientes</p>
-            <p className="text-4xl font-bold text-red-600 mt-2">{stats.recentErrors}</p>
+          <div className="bg-white/5 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-red-500/50 transition-colors group">
+            <p className="text-gray-400 text-sm font-medium group-hover:text-red-300 transition-colors">Errores Recientes</p>
+            <p className="text-4xl font-bold text-white mt-2">{stats.recentErrors}</p>
           </div>
         </div>
       )}
 
       {activeTab === 'users' && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-black/20 border-b border-white/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registro</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Último Login</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Usuario</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rol</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Registro</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Último Login</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-white/5">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {user.profileImage ? (
                           <img
                             src={`${API_URL}${user.profileImage}`}
                             alt={user.username}
-                            className="w-8 h-8 rounded-full mr-3"
+                            className="w-10 h-10 rounded-full mr-3 object-cover border-2 border-white/10"
                           />
                         ) : (
-                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                            <span className="text-gray-600 text-sm">👤</span>
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-3 border-2 border-white/10">
+                            <span className="text-gray-400 text-lg">👤</span>
                           </div>
                         )}
-                        <span className="font-medium text-gray-900">{user.username}</span>
+                        <span className="font-medium text-white">{user.username}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                       {user.email}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        className={`px-3 py-1 text-xs font-semibold rounded-full border ${
                           user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                            : 'bg-gray-500/20 text-gray-300 border-gray-500/30'
                         }`}
                       >
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                       {new Date(user.createdAt).toLocaleDateString('es-ES')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                       {user.lastLogin
                         ? new Date(user.lastLogin).toLocaleDateString('es-ES')
                         : 'Nunca'}
@@ -265,37 +271,39 @@ export default function AdminPanel() {
       )}
 
       {activeTab === 'logs' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="space-y-2 max-h-[600px] overflow-y-auto">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-6">
+          <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
             {logs.map((log, index) => (
               <div
                 key={index}
-                className={`p-3 rounded border-l-4 ${
+                className={`p-4 rounded-lg border-l-4 transition-all hover:bg-white/5 ${
                   log.level === 'error'
-                    ? 'bg-red-50 border-red-500'
+                    ? 'bg-red-900/10 border-red-500'
                     : log.level === 'warn'
-                    ? 'bg-yellow-50 border-yellow-500'
-                    : 'bg-blue-50 border-blue-500'
+                    ? 'bg-yellow-900/10 border-yellow-500'
+                    : 'bg-blue-900/10 border-blue-500'
                 }`}
               >
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
-                    <span
-                      className={`text-xs font-semibold uppercase ${
-                        log.level === 'error'
-                          ? 'text-red-700'
-                          : log.level === 'warn'
-                          ? 'text-yellow-700'
-                          : 'text-blue-700'
-                      }`}
-                    >
-                      {log.level}
-                    </span>
-                    <p className="text-sm text-gray-800 mt-1">{log.message}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
+                          log.level === 'error'
+                            ? 'bg-red-500/20 text-red-300'
+                            : log.level === 'warn'
+                            ? 'bg-yellow-500/20 text-yellow-300'
+                            : 'bg-blue-500/20 text-blue-300'
+                        }`}
+                      >
+                        {log.level}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(log.timestamp).toLocaleString('es-ES')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-200 font-mono">{log.message}</p>
                   </div>
-                  <span className="text-xs text-gray-500 ml-4">
-                    {new Date(log.timestamp).toLocaleString('es-ES')}
-                  </span>
                 </div>
               </div>
             ))}

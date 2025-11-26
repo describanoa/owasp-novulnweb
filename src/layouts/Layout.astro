@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { GL } from '../components/gl';
 
 type Props = {
   title: string;
@@ -19,9 +20,12 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
   </head>
-  <body class="min-h-screen bg-gray-50 flex flex-col">
+  <body class="min-h-screen flex flex-col text-foreground bg-background">
+    <GL client:only="react" />
     <Header client:load />
-    <slot />
+    <main class="flex-grow container mx-auto px-4 pt-24 relative z-10">
+      <slot />
+    </main>
     <Footer client:load />
   </body>
 </html>

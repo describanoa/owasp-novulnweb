@@ -69,48 +69,50 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white shadow-md">
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <a href="/" className="text-2xl font-bold text-blue-600">
-          🔒 SecureApp
+    <div className="fixed z-50 py-8 md:py-6 top-0 left-0 w-full bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm transition-all duration-300">
+      <header className="flex items-center justify-between container mx-auto px-4">
+        <a href="/" className="flex items-center gap-3 text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
+          <span className="text-white">SecureApp</span>
         </a>
         
-        <div className="space-x-4">
+        <div className="flex items-center gap-x-10">
           {/* Mostrar loading mientras valida el token */}
           {isValidating ? (
-            <span className="text-gray-500">Cargando...</span>
+            <span className="uppercase font-mono text-foreground/60">Cargando...</span>
           ) : isAuthenticated ? (
             <>
-              <a href="/profile" className="text-gray-700 hover:text-blue-600">
-                Mi Perfil
-              </a>
-              {isAdmin && (
-                <a href="/admin" className="text-purple-600 font-semibold hover:text-purple-700">
-                  👨‍💼 Admin
+              <nav className="flex max-lg:hidden items-center justify-center gap-x-10">
+                <a href="/profile" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out">
+                  Mi Perfil
                 </a>
-              )}
+                {isAdmin && (
+                  <a href="/admin" className="uppercase inline-block font-mono text-purple-400 hover:text-purple-300 duration-150 transition-colors ease-out">
+                    Admin
+                  </a>
+                )}
+              </nav>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 cursor-pointer"
+                className="uppercase transition-colors ease-out duration-150 font-mono text-red-500 hover:text-red-700 cursor-pointer bg-transparent border-none"
               >
                 Cerrar Sesión
               </button>
             </>
           ) : (
-            <>
-              <a href="/login" className="text-gray-700 hover:text-blue-600">
+            <nav className="flex items-center gap-x-10">
+              <a href="/login" className="uppercase inline-block font-mono text-foreground/60 hover:text-foreground/100 duration-150 transition-colors ease-out">
                 Iniciar Sesión
               </a>
               <a
                 href="/register"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="uppercase transition-colors ease-out duration-150 font-mono text-primary hover:text-primary/80"
               >
                 Registrarse
               </a>
-            </>
+            </nav>
           )}
         </div>
-      </nav>
-    </header>
+      </header>
+    </div>
   );
 }
