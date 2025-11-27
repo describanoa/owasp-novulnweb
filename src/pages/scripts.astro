@@ -299,15 +299,15 @@ curl -X POST http://localhost:3001/api/profile/upload \\
 ];
 
 const colorClasses: Record<string, string> = {
-  blue: 'from-blue-300 to-blue-700 border-blue-500',
-  purple: 'from-purple-300 to-purple-700 border-purple-500',
-  green: 'from-green-300 to-green-700 border-green-500',
-  orange: 'from-orange-300 to-orange-700 border-orange-500',
-  yellow: 'from-yellow-300 to-yellow-700 border-yellow-500',
-  cyan: 'from-cyan-300 to-cyan-700 border-cyan-500',
-  red: 'from-red-300 to-red-700 border-red-500',
-  indigo: 'from-indigo-300 to-indigo-700 border-indigo-500',
-  pink: 'from-pink-300 to-pink-700 border-pink-500',
+  blue: 'bg-blue-500/10 border-blue-500/50 text-blue-300',
+  purple: 'bg-purple-500/10 border-purple-500/50 text-purple-300',
+  green: 'bg-green-500/10 border-green-500/50 text-green-300',
+  orange: 'bg-orange-500/10 border-orange-500/50 text-orange-300',
+  yellow: 'bg-yellow-500/10 border-yellow-500/50 text-yellow-300',
+  cyan: 'bg-cyan-500/10 border-cyan-500/50 text-cyan-300',
+  red: 'bg-red-500/10 border-red-500/50 text-red-300',
+  indigo: 'bg-indigo-500/10 border-indigo-500/50 text-indigo-300',
+  pink: 'bg-pink-500/10 border-pink-500/50 text-pink-300',
 };
 
 const highlightCode = (code: string, language: string) => {
@@ -366,7 +366,7 @@ const highlightCode = (code: string, language: string) => {
         <!-- Tests por vulnerabilidad -->
         {tests.map((category) => (
           <section class="bg-white/5 backdrop-blur-md rounded-xl overflow-hidden border border-white/10">
-            <div class={`bg-gradient-to-r ${colorClasses[category.color]} px-6 py-4 opacity-90`}>
+            <div class={`${colorClasses[category.color]} backdrop-blur-md border-b px-6 py-4`}>
               <h2 class="text-white text-2xl font-bold flex items-center gap-3">
                 <Image 
                   src={category.icon} 
