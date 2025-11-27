@@ -310,14 +310,14 @@ export default function ProfileForm() {
               Seleccionar imagen
             </label>
             
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <input
                 type="file"
                 id="profileImage"
                 name="profileImage"
                 accept="image/jpeg,image/jpg,image/png"
                 onChange={handleFileChange}
-                className="flex-1 px-3 py-2 bg-white/5 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full sm:flex-1 min-w-0 px-3 py-2 bg-white/5 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-sm file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white file:cursor-pointer hover:file:bg-blue-700"
                 disabled={uploading}
               />
               
