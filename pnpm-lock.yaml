@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@astrojs/check':
-        specifier: ^0.9.6
+        specifier: 0.9.6
         version: 0.9.6(prettier@3.7.4)(typescript@5.9.3)
       '@astrojs/react':
         specifier: 4.4.2
@@ -84,7 +84,7 @@ importers:
         specifier: 0.181.2
         version: 0.181.2
       typescript:
-        specifier: ^5.9.3
+        specifier: 5.9.3
         version: 5.9.3
       winston:
         specifier: 3.18.3

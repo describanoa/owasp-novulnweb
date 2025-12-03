@@ -50,26 +50,58 @@ pnpm create astro@latest -- --template basics
 │   ├── auth.ts
 │   ├── db.ts
 │   ├── server.ts
-│   └── utils.ts
+│   ├── utils.ts
+│   └── vulnerabilities/
+│       ├── data/
+│       │   ├── A01-broken-access-control.ts
+│       │   ├── A02-cryptographic-failures.ts
+│       │   ├── A03-injection.ts
+│       │   ├── A04-insecure-design.ts
+│       │   ├── A05-security-misconfiguration.ts
+│       │   ├── A06-vulnerable-components.ts
+│       │   ├── A07-identification-failures.ts
+│       │   ├── A08-integrity-failures.ts
+│       │   ├── A09-logging-failures.ts
+│       │   └── A10-ssrf.ts
+│       ├── index.ts
+│       ├── routes.ts
+│       └── types.ts
 ├── logs/
 ├── public/
+│   ├── A01.webp ... A10.webp
 │   └── favicon.svg
 ├── src/
 │   ├── assets/
 │   ├── components/
+│   │   ├── gl/
+│   │   │   ├── index.tsx
+│   │   │   ├── particles.tsx
+│   │   │   └── shaders/
+│   │   │       ├── pointMaterial.ts
+│   │   │       ├── simulationMaterial.ts
+│   │   │       ├── utils.ts
+│   │   │       └── vignetteShader.ts
+│   │   ├── AdminPanel.tsx
 │   │   ├── Footer.tsx
 │   │   ├── Header.tsx
+│   │   ├── Hero.tsx
 │   │   ├── LoginForm.tsx
 │   │   ├── ProfileForm.tsx
 │   │   ├── RegisterForm.tsx
+│   │   ├── VulnerabilityGrid.tsx
 │   │   └── Welcome.astro
 │   ├── layouts/
 │   │   └── Layout.astro
 │   ├── pages/
+│   │   ├── vulnerabilities/
+│   │   │   ├── [id].astro
+│   │   │   └── index.astro
+│   │   ├── admin.astro
 │   │   ├── index.astro
 │   │   ├── login.astro
 │   │   ├── profile.astro
-│   │   └── register.astro
+│   │   ├── register.astro
+│   │   └── scripts.astro
 │   └── styles/
 │       └── global.css
 ├── uploads/
@@ -93,8 +125,12 @@ Este proyecto implementa mitigaciones para:
 - ✅ **A03:2021** – Injection
 - ✅ **A04:2021** – Insecure Design
 - ✅ **A05:2021** – Security Misconfiguration
+- ✅ **A06:2021** – Vulnerable and Outdated Components
 - ✅ **A07:2021** – Identification and Authentication Failures
+- ✅ **A08:2021** – Software and Data Integrity Failures
 - ✅ **A09:2021** – Security Logging and Monitoring Failures
+
+> 📄 Accede a `/scripts` para ver comandos curl que prueban cada mitigación.
 
 ## 🧑‍💻 Desarrollo Local
 
