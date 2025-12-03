@@ -105,7 +105,7 @@ const tests = [
         command: `curl -X POST http://localhost:3001/api/register \\
   -H "Content-Type: application/json" \\
   -d '{
-    "username": "<script> alert(\\"XSS\\")</script>",
+    "username": "<script> alert("XSS")</script>",
     "email": "hack@test.com",
     "password": "Password123"
   }'`,
@@ -115,7 +115,7 @@ const tests = [
   "errors":[
     {
       "type":"field",
-      "value":"<script>alert(\\"XSS\\")</script>",
+      "value":"<script>alert("XSS")</script>",
       "msg":"Username solo puede contener letras, números, guiones y guiones bajos",
       "path":"username",
       "location":"body"
